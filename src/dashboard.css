@@ -1,0 +1,8 @@
+.root: {
+    flexGrow: 1,
+}
+
+paper: {
+	padding: 20;
+	textAlign: 'center';
+}

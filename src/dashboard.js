@@ -1,6 +1,6 @@
 import React from "react";
 import {
-  Card,
+  Card as TCard,
   CardHeader,
   CardBody,
   CardFooter,
@@ -11,8 +11,16 @@ import {
 // react plugin used to create charts
 import { Line, Pie } from "react-chartjs-2";
 // function that returns a color based on an interval of numbers
-
+import Paper from '@material-ui/core/Paper';
+import Grid from '@material-ui/core/Grid';
+import Card from '@material-ui/core/Card';
+import CardMedia from '@material-ui/core/CardMedia';
+import CardContent from '@material-ui/core/CardContent';
+import Button from '@material-ui/core/Button';
+import Typography from '@material-ui/core/Typography';
 import Stats from "./Stats.jsx";
+import CardActions from '@material-ui/core/CardActions';
+import './dashboard.css';
 
 import {
   dashboard24HoursPerformanceChart,
@@ -23,40 +31,39 @@ import {
 class Dashboard extends React.Component {
   render() {
     return (
-      <div className="content">
-        <Row>
-          <Col xs={12} sm={6} md={6} lg={3}>
-            <Card className="card-stats">
-              <CardBody>
-                <Row>
-                  <Col xs={5} md={4}>
-                    <div className="icon-big text-center">
-                      <i className="nc-icon nc-globe text-warning" />
-                    </div>
-                  </Col>
-                  <Col xs={7} md={8}>
-                    <div className="numbers">
-                      <p className="card-category">Capacity</p>
-                      <CardTitle tag="p">150GB</CardTitle>
-                    </div>
-                  </Col>
-                </Row>
-              </CardBody>
-              <CardFooter>
-                <hr />
-                <Stats>
-                  {[
-                    {
-                      i: "fas fa-sync-alt",
-                      t: "Update Now"
-                    }
-                  ]}
-                </Stats>
-              </CardFooter>
+      <div className="dashboardContainer">
+      <div className="root">
+        <Grid container spacing={24}>
+          <Grid item xs={12}>
+            <Paper className="paper1">xs=12</Paper>
+          </Grid>
+          <Grid item xs={6}>
+            <Paper className="paper1">xs=6</Paper>
+          </Grid>
+          <Grid item xs={6}>
+            <Paper className="paper1">xs=6</Paper>
+          </Grid>
+          <Grid item xs={3}>
+            <Card className="card">
+                <CardMedia
+                  style={{height: 0, paddingTop: '76%'}}
+                  className="media"
+                  image={require("./assets/img/faces/kaci-baum-2.jpg")}
+                  title="Contemplative Reptile"
+                />
+                <CardContent>
+                  <Typography gutterBottom variant="h5" component="h2">
+                    Welcome! User 102488
+                  </Typography>
+                  <Typography component="p">
+                    Lizards are a widespread group of squamate reptiles, with over 6,000 species, ranging
+                    across all continents except Antarctica
+                  </Typography>
+                </CardContent>
             </Card>
-          </Col>
-          <Col xs={12} sm={6} md={6} lg={3}>
-            <Card className="card-stats">
+          </Grid>
+          <Grid item xs={3}>
+            <TCard className="card-stats">
               <CardBody>
                 <Row>
                   <Col xs={5} md={4}>
@@ -72,112 +79,8 @@ class Dashboard extends React.Component {
                   </Col>
                 </Row>
               </CardBody>
-              <CardFooter>
-                <hr />
-                <Stats>
-                  {[
-                    {
-                      i: "far fa-calendar",
-                      t: "Last day"
-                    }
-                  ]}
-                </Stats>
-              </CardFooter>
-            </Card>
-          </Col>
-          <Col xs={12} sm={6} md={6} lg={3}>
-            <Card className="card-stats">
-              <CardBody>
-                <Row>
-                  <Col xs={5} md={4}>
-                    <div className="icon-big text-center">
-                      <i className="nc-icon nc-vector text-danger" />
-                    </div>
-                  </Col>
-                  <Col xs={7} md={8}>
-                    <div className="numbers">
-                      <p className="card-category">Errors</p>
-                      <CardTitle tag="p">23</CardTitle>
-                    </div>
-                  </Col>
-                </Row>
-              </CardBody>
-              <CardFooter>
-                <hr />
-                <Stats>
-                  {[
-                    {
-                      i: "far fa-clock",
-                      t: "In the last hour"
-                    }
-                  ]}
-                </Stats>
-              </CardFooter>
-            </Card>
-          </Col>
-          <Col xs={12} sm={6} md={6} lg={3}>
-            <Card className="card-stats">
-              <CardBody>
-                <Row>
-                  <Col xs={5} md={4}>
-                    <div className="icon-big text-center">
-                      <i className="nc-icon nc-favourite-28 text-primary" />
-                    </div>
-                  </Col>
-                  <Col xs={7} md={8}>
-                    <div className="numbers">
-                      <p className="card-category">Followers</p>
-                      <CardTitle tag="p">+45K</CardTitle>
-                    </div>
-                  </Col>
-                </Row>
-              </CardBody>
-              <CardFooter>
-                <hr />
-                <Stats>
-                  {[
-                    {
-                      i: "fas fa-sync-alt",
-                      t: "Update now"
-                    }
-                  ]}
-                </Stats>
-              </CardFooter>
-            </Card>
-          </Col>
-        </Row>
-        <Row>
-          <Col xs={12}>
-            <Card>
-              <CardHeader>
-                <CardTitle>Users Behavior</CardTitle>
-                <p className="card-category">24 Hours performance</p>
-              </CardHeader>
-              <CardBody>
-                <Line
-                  data={dashboard24HoursPerformanceChart.data}
-                  options={dashboard24HoursPerformanceChart.options}
-                  width={400}
-                  height={100}
-                />
-              </CardBody>
-              <CardFooter>
-                <hr />
-                <Stats>
-                  {[
-                    {
-                      i: "fas fa-history",
-                      t: " Updated 3 minutes ago"
-                    }
-                  ]}
-                </Stats>
-              </CardFooter>
-            </Card>
-          </Col>
-        </Row>
-        <Row>
-          <Col xs={12} sm={12} md={4}>
-            <Card>
+            </TCard>
+            <TCard>
               <CardHeader>
                 <CardTitle>Email Statistics</CardTitle>
                 <p className="card-category">Last Campaign Performance</p>
@@ -195,20 +98,11 @@ class Dashboard extends React.Component {
                   <i className="fa fa-circle text-danger" /> Deleted{" "}
                   <i className="fa fa-circle text-gray" /> Unopened
                 </div>
-                <hr />
-                <Stats>
-                  {[
-                    {
-                      i: "fas fa-calendar-alt",
-                      t: " Number of emails sent"
-                    }
-                  ]}
-                </Stats>
               </CardFooter>
-            </Card>
-          </Col>
-          <Col xs={12} sm={12} md={8}>
-            <Card className="card-chart">
+            </TCard>
+          </Grid>
+          <Grid item xs={6}>
+            <TCard className="card-chart">
               <CardHeader>
                 <CardTitle>NASDAQ: AAPL</CardTitle>
                 <p className="card-category">Line Chart With Points</p>
@@ -236,9 +130,25 @@ class Dashboard extends React.Component {
                   ]}
                 </Stats>
               </CardFooter>
-            </Card>
-          </Col>
-        </Row>
+            </TCard>
+          </Grid>
+          <Grid item xs={3}>
+            <Paper className="paper1">xs=3</Paper>
+          </Grid>
+          <Grid item xs={3}>
+            <Paper className="paper1">xs=3</Paper>
+          </Grid>
+          <Grid item xs={3}>
+            <Paper className="paper1">xs=3</Paper>
+          </Grid>
+          <Grid item xs={3}>
+            <Paper className="paper1">xs=3</Paper>
+          </Grid>
+          <Grid item xs={12}>
+            <Paper className="paper1">xs=3</Paper>
+          </Grid>
+        </Grid>
+      </div>
       </div>
     );
   }
