@@ -42,14 +42,20 @@ class Portfolio extends React.Component {
             </Button>
           </Grid>
           <Grid item xs={12}>
-            <Typography variant="h6" className="title">
+            <Typography variant="h2" className="title">
               Portfolio A
             </Typography>
           </Grid>
-          <Grid item xs={12}>
-            <Paper className="paper1">xs=12</Paper>
+          <Grid item xs={6}>
+            <Paper className="paper1">
+              <div className="fund">
+                <Typography variant="display2" className="title">Fund A</Typography>
+                <Typography variant="h6" className="title">Target %:</Typography>
+                <Typography variant="h6" className="title">Current %:</Typography>
+              </div>
+            </Paper>
           </Grid>
-          <Grid item xs={12}>
+          <Grid item xs={6}>
             <Paper className="paper1">xs=12</Paper>
           </Grid>
           <Grid item xs={12}>
