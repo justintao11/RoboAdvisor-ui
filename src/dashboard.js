@@ -20,6 +20,16 @@ import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 import Stats from "./Stats.jsx";
 import CardActions from '@material-ui/core/CardActions';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemAvatar from '@material-ui/core/ListItemAvatar';
+import ListItemIcon from '@material-ui/core/ListItemIcon';
+import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
+import ListItemText from '@material-ui/core/ListItemText';
+import Avatar from '@material-ui/core/Avatar';
+import IconButton from '@material-ui/core/IconButton';
+import FolderIcon from '@material-ui/icons/Folder';
+import DeleteIcon from '@material-ui/icons/Delete';
 import './dashboard.css';
 
 import {
@@ -29,38 +39,32 @@ import {
 } from "./variables/charts.jsx";
 
 class Dashboard extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      selected: null
+    }
+  }
+
   render() {
     return (
       <div className="dashboardContainer">
       <div className="root">
         <Grid container spacing={24}>
-          <Grid item xs={12}>
-            <Paper className="paper1">xs=12</Paper>
-          </Grid>
-          <Grid item xs={6}>
-            <Paper className="paper1">xs=6</Paper>
-          </Grid>
-          <Grid item xs={6}>
-            <Paper className="paper1">xs=6</Paper>
-          </Grid>
           <Grid item xs={3}>
-            <Card className="card">
+            <TCard className="card">
                 <CardMedia
-                  style={{height: 0, paddingTop: '76%'}}
+                  style={{height: 0, paddingTop: '82%'}}
                   className="media"
-                  image={require("./assets/img/faces/kaci-baum-2.jpg")}
+                  image={require("./assets/img/logo-small.png")}
                   title="Contemplative Reptile"
                 />
                 <CardContent>
                   <Typography gutterBottom variant="h5" component="h2">
                     Welcome! User 102488
                   </Typography>
-                  <Typography component="p">
-                    Lizards are a widespread group of squamate reptiles, with over 6,000 species, ranging
-                    across all continents except Antarctica
-                  </Typography>
                 </CardContent>
-            </Card>
+            </TCard>
           </Grid>
           <Grid item xs={3}>
             <TCard className="card-stats">
@@ -83,7 +87,6 @@ class Dashboard extends React.Component {
             <TCard>
               <CardHeader>
                 <CardTitle>Email Statistics</CardTitle>
-                <p className="card-category">Last Campaign Performance</p>
               </CardHeader>
               <CardBody>
                 <Pie
@@ -132,20 +135,71 @@ class Dashboard extends React.Component {
               </CardFooter>
             </TCard>
           </Grid>
-          <Grid item xs={3}>
-            <Paper className="paper1">xs=3</Paper>
-          </Grid>
-          <Grid item xs={3}>
-            <Paper className="paper1">xs=3</Paper>
-          </Grid>
-          <Grid item xs={3}>
-            <Paper className="paper1">xs=3</Paper>
-          </Grid>
-          <Grid item xs={3}>
-            <Paper className="paper1">xs=3</Paper>
-          </Grid>
           <Grid item xs={12}>
-            <Paper className="paper1">xs=3</Paper>
+            <Typography variant="h6" className="title">
+              My Portfolios
+            </Typography>
+            <div className="list">
+              <List dense="false">
+                  <ListItem button>
+                    <ListItemAvatar>
+                      <Avatar>
+                        <FolderIcon />
+                      </Avatar>
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary="Portfolio A"
+                      secondary="some descriptions"
+                    />
+                    <ListItemSecondaryAction>
+                      <IconButton aria-label="Delete">
+                        <DeleteIcon />
+                      </IconButton>
+                      <IconButton aria-label="Delete">
+                        <DeleteIcon />
+                      </IconButton>
+                    </ListItemSecondaryAction>
+                  </ListItem>
+                  <ListItem button>
+                    <ListItemAvatar>
+                      <Avatar>
+                        <FolderIcon />
+                      </Avatar>
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary="Portfolio A"
+                      secondary="some descriptions"
+                    />
+                    <ListItemSecondaryAction>
+                      <IconButton aria-label="Delete">
+                        <DeleteIcon />
+                      </IconButton>
+                      <IconButton aria-label="Delete">
+                        <DeleteIcon />
+                      </IconButton>
+                    </ListItemSecondaryAction>
+                  </ListItem>
+                  <ListItem button>
+                    <ListItemAvatar>
+                      <Avatar>
+                        <FolderIcon />
+                      </Avatar>
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary="Portfolio A"
+                      secondary="some descriptions"
+                    />
+                    <ListItemSecondaryAction>
+                      <IconButton aria-label="Delete">
+                        <DeleteIcon />
+                      </IconButton>
+                      <IconButton aria-label="Delete">
+                        <DeleteIcon />
+                      </IconButton>
+                    </ListItemSecondaryAction>
+                  </ListItem>
+              </List>
+            </div>
           </Grid>
         </Grid>
       </div>

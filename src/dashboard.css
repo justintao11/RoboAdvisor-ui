@@ -6,3 +6,15 @@ paper: {
 	padding: 20;
 	textAlign: 'center';
 }
+
+.dashboardContainer {
+	padding-left: 5%;
+	padding-right: 5%;
+	padding-top: 3%;
+	background: #fafafa;
+	height: 100vh;
+}
+
+.list{
+	background: #FFFFFF;
+}
