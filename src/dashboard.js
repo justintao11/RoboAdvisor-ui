@@ -38,12 +38,49 @@ import {
   dashboardNASDAQChart
 } from "./variables/charts.jsx";
 
+const request = require('request');
+
 class Dashboard extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       selected: null
     }
+    this.handleClick = this.handleClick.bind(this);
+    this.getPortfolio = this.getPortfolio.bind(this);
+  }
+
+  
+
+  getPortfolio(custId, portfolioId) {
+    //let baseURL = "http://fund-rebalancer.hsbc-roboadvisor.appspot.com/";
+
+      let headers = {
+        'x-custid': "1"
+      }
+   
+      let options = {
+        //url: baseURL + "roboadvisor/portfolio/" + portfolioId,
+        url: "http://fund-rebalancer.hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/1",
+        method: 'GET',
+        headers: headers
+      }
+   
+      request(options, function (error, response, body) {
+          if (!error && response.statusCode == 200) {
+              // Print out the response body
+              let info = JSON.parse(body);
+              console.log(info);
+              // console.log(response);
+              // console.log(error);
+          }
+          
+      });   
+  }
+
+  handleClick() {
+    console.log("hello");
+    this.getPortfolio(1,1);
   }
 
   render() {
@@ -152,7 +189,7 @@ class Dashboard extends React.Component {
                       secondary="some descriptions"
                     />
                     <ListItemSecondaryAction>
-                      <IconButton aria-label="Delete">
+                      <IconButton onClick={this.handleClick} aria-label="Delete">
                         <DeleteIcon />
                       </IconButton>
                       <IconButton aria-label="Delete">
