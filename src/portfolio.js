@@ -50,9 +50,10 @@ class Portfolio extends React.Component {
             <Paper className="paper1">
               <div className="fund">
                 <Typography variant="display2" className="title">Fund A</Typography>
-                <Typography variant="h6" className="title">Target %:</Typography>
-                <Typography variant="h6" className="title">Current %:</Typography>
+                <Typography variant="h6" className="title">Target %: {20}</Typography>
+                <Typography variant="h6" className="title">Current %: {20}</Typography>
               </div>
+
             </Paper>
           </Grid>
           <Grid item xs={6}>
