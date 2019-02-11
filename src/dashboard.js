@@ -53,17 +53,18 @@ class Dashboard extends React.Component {
   
 
   getPortfolio(custId, portfolioId) {
-    //let baseURL = "http://fund-rebalancer.hsbc-roboadvisor.appspot.com/";
+    let baseURL = "http://fund-rebalancer.hsbc-roboadvisor.appspot.com/";
 
       let headers = {
-        'x-custid': "1"
+        'x-custid': custId
       }
    
       let options = {
-        //url: baseURL + "roboadvisor/portfolio/" + portfolioId,
-        url: "http://fund-rebalancer.hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/1",
+        url: baseURL + "roboadvisor/portfolio/" + portfolioId,
+        //url: "http://fund-rebalancer.hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/1x1",
         method: 'GET',
         headers: headers
+
       }
    
       request(options, function (error, response, body) {
@@ -74,12 +75,15 @@ class Dashboard extends React.Component {
               // console.log(response);
               // console.log(error);
           }
+            console.log(error);
+          
+        
           
       });   
   }
 
-  handleClick() {
-    console.log("hello");
+  handleClick = (e) => {
+    console.log(e.target.value)
     this.getPortfolio(1,1);
   }
 
@@ -189,7 +193,7 @@ class Dashboard extends React.Component {
                       secondary="some descriptions"
                     />
                     <ListItemSecondaryAction>
-                      <IconButton onClick={this.handleClick} aria-label="Delete">
+                      <IconButton value="2000" onClick={this.handleClick} aria-label="Delete">
                         <DeleteIcon />
                       </IconButton>
                       <IconButton aria-label="Delete">
