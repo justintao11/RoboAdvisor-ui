@@ -282,16 +282,8 @@ class Dashboard extends React.Component {
                       secondary="some descriptions"
                     />
                     <ListItemSecondaryAction>
-<<<<<<< HEAD
                       <IconButton aria-label="Tune">
                         <TuneIcon />
-=======
-                      <IconButton value="2000" onClick={this.handleClick} aria-label="Delete">
-                        <DeleteIcon />
-                      </IconButton>
-                      <IconButton aria-label="Delete">
-                        <DeleteIcon />
->>>>>>> 60a81c175573e2e6135e490f62d8518d5bb8529a
                       </IconButton>
                     </ListItemSecondaryAction>
                   </ListItem>
@@ -306,16 +298,8 @@ class Dashboard extends React.Component {
                       secondary="some descriptions"
                     />
                     <ListItemSecondaryAction>
-<<<<<<< HEAD
                       <IconButton aria-label="Tune">
                         <TuneIcon />
-=======
-                      <IconButton value="2000" onClick={this.handleClick} aria-label="Delete">
-                        <DeleteIcon />
-                      </IconButton>
-                      <IconButton aria-label="Delete">
-                        <DeleteIcon />
->>>>>>> 60a81c175573e2e6135e490f62d8518d5bb8529a
                       </IconButton>
                     </ListItemSecondaryAction>
                   </ListItem>
