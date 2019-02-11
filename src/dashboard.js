@@ -41,17 +41,72 @@ import {
 
 const request = require('request');
 
+
+
 class Dashboard extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       selected: null,
-      toPortfolio: false
+      toPortfolio: false,
+      totalAssets: 0
     }
     this.handleClick = this.handleClick.bind(this);
     this.getPortfolio = this.getPortfolio.bind(this);
+    this.getTotalAssets = this.getTotalAssets.bind(this);
   }
 
+  componentDidMount(){
+    console.log("something mounted");
+    // hardcoded total assets for custid = 73648
+    this.getTotalAssets("73648");
+  }
+
+  getTotalAssets(custId){
+    let baseURL = "https://us-central1-useful-memory-229303.cloudfunctions.net/portfolios";
+    let total = 0;
+
+      let headers = {
+        'x-custid': custId
+      }
+   
+      let options = {
+        url: baseURL + "/" + custId,
+        method: 'GET',
+        headers: headers
+      }
+
+      let that = this;
+   
+      request(options, function (error, response, body) {
+          if (!error && response.statusCode == 200) {
+              // Print out the response body
+              let info = JSON.parse(body);
+             
+              // Calculate total assets of each fund in all portfolios
+              for (var key in info){
+                if (info.hasOwnProperty(key)){
+                  var val = info[key];
+                  var holdings = val.holdings;
+
+                  for (var fund in holdings){
+                    if (holdings.hasOwnProperty(fund)){
+                      var val1 = holdings[fund];
+                      var amount = val1.balance.amount;
+                      total += amount;                      
+                    }
+                  }
+                }
+              }
+
+              that.setState({
+                totalAssets: total
+              });
+          }
+            console.log(error);              
+      });   
+
+  }
   
 
   getPortfolio(custId, portfolioId) {
@@ -128,8 +183,12 @@ class Dashboard extends React.Component {
                   </Col>
                   <Col xs={7} md={8}>
                     <div className="numbers">
-                      <p className="card-category">Revenue</p>
-                      <CardTitle tag="p">$ 1,345</CardTitle>
+                      <p className="card-category">Total Assets</p>
+                      <CardTitle tag="p">
+                        <Typography component="p">
+                        ${this.state.totalAssets.toFixed(2)}
+                        </Typography>
+                      </CardTitle>
                     </div>
                   </Col>
                 </Row>
@@ -137,7 +196,7 @@ class Dashboard extends React.Component {
             </TCard>
             <TCard>
               <CardHeader>
-                <CardTitle>Email Statistics</CardTitle>
+                <CardTitle>Portfolio Percentage</CardTitle>
               </CardHeader>
               <CardBody>
                 <Pie
