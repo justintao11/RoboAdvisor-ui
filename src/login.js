@@ -30,19 +30,30 @@ const styles = theme => ({
 });
 
 
+const uid = 3000;
+
+
 class Login extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      toDashboard: false
+      toDashboard: false,
+      idValue: ''
     }
     this.handleLogin = this.handleLogin.bind(this);
+    this.handleUserIDChange = this.handleUserIDChange.bind(this);
   }
 
   handleLogin() {
     console.log("???");
     this.setState({
       toDashboard: true
+    });
+  }
+
+  handleUserIDChange = (e) => {
+    this.setState({
+      idValue: e.target.value
     })
   }
 
@@ -51,8 +62,14 @@ class Login extends Component {
       this.setState({
         toDashboard: false
       })
-      return <Redirect to='/dashboard' />
+      return <Redirect to={{
+                      pathname:'/dashboard',
+                      state: {id: this.state.idValue} 
+          }}
+      />;
     }
+
+    
 
     return (
       <div className="App">
@@ -71,10 +88,13 @@ class Login extends Component {
                 <Grid container spacing={24}>
                   <Grid item xs={12}>
                       <TextField
+                      placeholder="Plase enter User ID"
+                      value={this.state.idValue}
                       id="outlined-dense"
                       label="User ID"
                       className="dense"
                       margin="dense"
+                      onChange={this.handleUserIDChange}
                       variant="outlined"
                     />
                   </Grid>
