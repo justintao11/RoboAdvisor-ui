@@ -278,12 +278,12 @@ class Portfolio extends React.Component {
             <Grid container spacing={24}>
             <Grid item xs={6}>
               <Button onClick={this.setTarget} fullWidth="true" variant="contained" color="secondary" className="TOPBUTTON">
-                SET TARGET
+                MODIFY
               </Button>
             </Grid>
             <Grid item xs={6}>
               <Button onClick={this.setTarget} fullWidth="true" variant="contained" color="secondary" className="TOPBUTTON">
-                SET TARGET
+                EXECUTE
               </Button>
             </Grid>
             </Grid>
