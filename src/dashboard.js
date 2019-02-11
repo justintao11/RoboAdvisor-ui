@@ -30,6 +30,7 @@ import Avatar from '@material-ui/core/Avatar';
 import IconButton from '@material-ui/core/IconButton';
 import FolderIcon from '@material-ui/icons/Folder';
 import DeleteIcon from '@material-ui/icons/Delete';
+import { Redirect} from 'react-router-dom';
 import './dashboard.css';
 
 import {
@@ -38,18 +39,67 @@ import {
   dashboardNASDAQChart
 } from "./variables/charts.jsx";
 
+const request = require('request');
+
 class Dashboard extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      selected: null
+      selected: null,
+      toPortfolio: false
     }
+    this.handleClick = this.handleClick.bind(this);
+    this.getPortfolio = this.getPortfolio.bind(this);
+  }
+
+  
+
+  getPortfolio(custId, portfolioId) {
+    let baseURL = "http://fund-rebalancer.hsbc-roboadvisor.appspot.com/";
+
+      let headers = {
+        'x-custid': custId
+      }
+   
+      let options = {
+        url: baseURL + "roboadvisor/portfolio/" + portfolioId,
+        //url: "http://fund-rebalancer.hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/1x1",
+        method: 'GET',
+        headers: headers
+      }
+
+      let that = this;
+   
+      request(options, function (error, response, body) {
+          if (!error && response.statusCode == 200) {
+              // Print out the response body
+              let info = JSON.parse(body);
+              that.setState({
+                toPortfolio: true
+              });
+              console.log(info);
+              // console.log(response);
+              // console.log(error);
+          }
+            console.log(error);              
+      });   
+  }
+
+  handleClick = (e) => {
+    console.log(e.target.value)
+    this.getPortfolio(1,1);
   }
 
 
   render() {
+
     const data = this.props.location.state.id;
-  
+    if (this.state.toPortfolio === true) {
+      this.setState({
+        toPortfolio: false
+      })
+      return <Redirect to='/portfolio' />
+    }
 
     return (
       <div className="dashboardContainer">
@@ -156,7 +206,7 @@ class Dashboard extends React.Component {
                       secondary="some descriptions"
                     />
                     <ListItemSecondaryAction>
-                      <IconButton aria-label="Delete">
+                      <IconButton value="2000" onClick={this.handleClick} aria-label="Delete">
                         <DeleteIcon />
                       </IconButton>
                       <IconButton aria-label="Delete">
@@ -171,11 +221,11 @@ class Dashboard extends React.Component {
                       </Avatar>
                     </ListItemAvatar>
                     <ListItemText
-                      primary="Portfolio A"
+                      primary="Portfolio B"
                       secondary="some descriptions"
                     />
                     <ListItemSecondaryAction>
-                      <IconButton aria-label="Delete">
+                      <IconButton value="2000" onClick={this.handleClick} aria-label="Delete">
                         <DeleteIcon />
                       </IconButton>
                       <IconButton aria-label="Delete">
@@ -190,11 +240,11 @@ class Dashboard extends React.Component {
                       </Avatar>
                     </ListItemAvatar>
                     <ListItemText
-                      primary="Portfolio A"
+                      primary="Portfolio C"
                       secondary="some descriptions"
                     />
                     <ListItemSecondaryAction>
-                      <IconButton aria-label="Delete">
+                      <IconButton value="2000" onClick={this.handleClick} aria-label="Delete">
                         <DeleteIcon />
                       </IconButton>
                       <IconButton aria-label="Delete">

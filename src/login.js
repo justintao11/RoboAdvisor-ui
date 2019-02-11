@@ -38,7 +38,7 @@ class Login extends Component {
     super(props);
     this.state = {
       toDashboard: false,
-      idValue: 0
+      idValue: ''
     }
     this.handleLogin = this.handleLogin.bind(this);
     this.handleUserIDChange = this.handleUserIDChange.bind(this);
