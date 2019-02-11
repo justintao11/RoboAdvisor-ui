@@ -30,6 +30,7 @@ import Avatar from '@material-ui/core/Avatar';
 import IconButton from '@material-ui/core/IconButton';
 import FolderIcon from '@material-ui/icons/Folder';
 import DeleteIcon from '@material-ui/icons/Delete';
+import { Redirect} from 'react-router-dom';
 import './dashboard.css';
 
 import {
@@ -44,7 +45,8 @@ class Dashboard extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      selected: null
+      selected: null,
+      toPortfolio: false
     }
     this.handleClick = this.handleClick.bind(this);
     this.getPortfolio = this.getPortfolio.bind(this);
@@ -64,21 +66,22 @@ class Dashboard extends React.Component {
         //url: "http://fund-rebalancer.hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/1x1",
         method: 'GET',
         headers: headers
-
       }
+
+      let that = this;
    
       request(options, function (error, response, body) {
           if (!error && response.statusCode == 200) {
               // Print out the response body
               let info = JSON.parse(body);
+              that.setState({
+                toPortfolio: true
+              });
               console.log(info);
               // console.log(response);
               // console.log(error);
           }
-            console.log(error);
-          
-        
-          
+            console.log(error);              
       });   
   }
 
@@ -88,6 +91,13 @@ class Dashboard extends React.Component {
   }
 
   render() {
+    if (this.state.toPortfolio === true) {
+      this.setState({
+        toPortfolio: false
+      })
+      return <Redirect to='/portfolio' />
+    }
+
     return (
       <div className="dashboardContainer">
       <div className="root">
