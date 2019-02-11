@@ -46,7 +46,11 @@ class Dashboard extends React.Component {
     }
   }
 
+
   render() {
+    const data = this.props.location.state.id;
+  
+
     return (
       <div className="dashboardContainer">
       <div className="root">
@@ -61,7 +65,7 @@ class Dashboard extends React.Component {
                 />
                 <CardContent>
                   <Typography gutterBottom variant="h5" component="h2">
-                    Welcome! User 102488
+                    Welcome! User {data}
                   </Typography>
                 </CardContent>
             </TCard>
