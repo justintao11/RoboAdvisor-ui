@@ -30,6 +30,7 @@ import Avatar from '@material-ui/core/Avatar';
 import IconButton from '@material-ui/core/IconButton';
 import FolderIcon from '@material-ui/icons/Folder';
 import DeleteIcon from '@material-ui/icons/Delete';
+import TuneIcon from '@material-ui/icons/Tune';
 import { Redirect} from 'react-router-dom';
 import './dashboard.css';
 
@@ -251,7 +252,7 @@ class Dashboard extends React.Component {
             </Typography>
             <div className="list">
               <List dense="false">
-                  <ListItem button>
+                  <ListItem button value="2000" onClick={this.handleClick}>
                     <ListItemAvatar>
                       <Avatar>
                         <FolderIcon />
@@ -262,11 +263,8 @@ class Dashboard extends React.Component {
                       secondary="some descriptions"
                     />
                     <ListItemSecondaryAction>
-                      <IconButton value="2000" onClick={this.handleClick} aria-label="Delete">
-                        <DeleteIcon />
-                      </IconButton>
-                      <IconButton aria-label="Delete">
-                        <DeleteIcon />
+                      <IconButton aria-label="Tune">
+                        <TuneIcon />
                       </IconButton>
                     </ListItemSecondaryAction>
                   </ListItem>
@@ -281,11 +279,8 @@ class Dashboard extends React.Component {
                       secondary="some descriptions"
                     />
                     <ListItemSecondaryAction>
-                      <IconButton aria-label="Delete">
-                        <DeleteIcon />
-                      </IconButton>
-                      <IconButton aria-label="Delete">
-                        <DeleteIcon />
+                      <IconButton aria-label="Tune">
+                        <TuneIcon />
                       </IconButton>
                     </ListItemSecondaryAction>
                   </ListItem>
@@ -300,11 +295,8 @@ class Dashboard extends React.Component {
                       secondary="some descriptions"
                     />
                     <ListItemSecondaryAction>
-                      <IconButton aria-label="Delete">
-                        <DeleteIcon />
-                      </IconButton>
-                      <IconButton aria-label="Delete">
-                        <DeleteIcon />
+                      <IconButton aria-label="Tune">
+                        <TuneIcon />
                       </IconButton>
                     </ListItemSecondaryAction>
                   </ListItem>
