@@ -1,0 +1,15 @@
+.doughnutChart {
+
+}
+
+.TOPBUTTON {
+	width: 120px;
+	margin-right: 20px !important;
+}
+
+.rellocationRow {
+	display: flex;
+	flex-direction: row;
+	text-align: center;
+	align-items: center;
+}
