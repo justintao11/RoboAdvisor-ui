@@ -18,6 +18,7 @@ import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
 import './portfolio.css';
 import Stats from "./Stats.jsx";
+import { Redirect} from 'react-router-dom';
 
 import {
   dashboard24HoursPerformanceChart,
@@ -102,7 +103,9 @@ class Portfolio extends React.Component {
       reallocationOn: false,
       recommandOn:false,
       target1: 20,
-      fundb: 0
+      fundb: 0,
+      toDashboard: false,
+      userId: props.location.state.id
     }
     this.handleReallocationClick = this.handleReallocationClick.bind(this);
   }
@@ -119,6 +122,12 @@ class Portfolio extends React.Component {
     })
   }
 
+  handleBack = (e) => {
+    this.setState({
+      toDashboard: true
+    })
+  }
+
   setTarget = (e) => {
     this.setState({
       reallocationOn: false,
@@ -126,14 +135,31 @@ class Portfolio extends React.Component {
     })
   }
 
+  executeRecommend = (e) => {
+    this.setState({
+      recommandOn: false
+    })
+  }
+
 
   render() {
+    if (this.state.toDashboard === true) {
+      this.setState({
+        toDashboard: false
+      })
+      return <Redirect to={{
+                pathname:'/dashboard',
+                state: {id: this.state.userId} 
+          }}
+      />;
+    }
+
     return (
       <div className="dashboardContainer">
       <div className="root">
         <Grid container spacing={24}>
           <Grid item xs={12}>
-            <Button variant="contained" color="secondary" className="TOPBUTTON">
+            <Button variant="contained" onClick={this.handleBack} color="secondary" className="TOPBUTTON">
               Back
             </Button>
             <Button variant="contained" onClick={this.handleReallocationClick} color="default" className="TOPBUTTON">
@@ -145,8 +171,8 @@ class Portfolio extends React.Component {
               Portfolio A
             </Typography>
           </Grid>
-          <Grid item xs={3}>
-            <Paper className="paper1">
+          <Grid item xs={this.state.recommandOn? 3 : 9}>
+            <Paper className="fundCard">
               <div className="fund">
                 <Typography variant="display2" className="title">Fund A</Typography>
                 {this.state.reallocationOn ? (
@@ -180,11 +206,37 @@ class Portfolio extends React.Component {
               options={dashboardEmailStatisticsChart.options}
             />
           </Grid>
+          {this.state.recommandOn && (
           <Grid item xs={6}>
-            <Paper className="paper1">xs=12</Paper>
+            <Paper className="fundCard">
+              <Typography variant="h6" className="title">Recommendation: fund{"B"} :</Typography>
+              <div className="rellocationRow">
+                <Button variant="contained" color="default" className="TOPBUTTON">
+                  Sell
+                </Button>
+                <Button variant="contained" color="secondary" className="TOPBUTTON">
+                  Buy
+                </Button>
+                <TextField
+                    id="outlined-number"
+                    label="Number"
+                    value={this.state.fundb}
+                    onChange={this.handleChange('bundb')}
+                    type="number"
+                    className="textField"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    margin="normal"
+                    variant="outlined"
+                />
+                <Typography> UNITS</Typography>
+              </div>
+            </Paper>
           </Grid>
-          <Grid item xs={3}>
-            <Paper className="paper1">
+          )}
+          <Grid item xs={this.state.recommandOn? 3 : 9}>
+            <Paper className="fundCard">
               <div className="fund">
                 <Typography variant="display2" className="title">Fund B</Typography>
                 {this.state.reallocationOn ? (
@@ -217,8 +269,9 @@ class Portfolio extends React.Component {
               options={dashboardEmailStatisticsChart.options}
             />
           </Grid>
+          {this.state.recommandOn && (
           <Grid item xs={6}>
-            <Paper className="paper1">
+            <Paper className="fundCard">
               <Typography variant="h6" className="title">Recommendation: fund{"B"} :</Typography>
               <div className="rellocationRow">
                 <Button variant="contained" color="default" className="TOPBUTTON">
@@ -244,8 +297,9 @@ class Portfolio extends React.Component {
               </div>
             </Paper>
           </Grid>
-          <Grid item xs={3}>
-            <Paper className="paper1">
+          )}
+          <Grid item xs={this.state.recommandOn? 3 : 9}>
+            <Paper className="fundCard">
               <div className="fund">
                 <Typography variant="display2" className="title">Fund C</Typography>
                 {this.state.reallocationOn ? (
@@ -278,9 +332,35 @@ class Portfolio extends React.Component {
               options={dashboardEmailStatisticsChart.options}
             />
           </Grid>
+          {this.state.recommandOn && (
           <Grid item xs={6}>
-            <Paper className="paper1">xs=12</Paper>
+            <Paper className="fundCard">
+              <Typography variant="h6" className="title">Recommendation: fund{"B"} :</Typography>
+              <div className="rellocationRow">
+                <Button variant="contained" color="default" className="TOPBUTTON">
+                  Sell
+                </Button>
+                <Button variant="contained" color="secondary" className="TOPBUTTON">
+                  Buy
+                </Button>
+                <TextField
+                    id="outlined-number"
+                    label="Number"
+                    value={this.state.fundb}
+                    onChange={this.handleChange('bundb')}
+                    type="number"
+                    className="textField"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    margin="normal"
+                    variant="outlined"
+                />
+                <Typography> UNITS</Typography>
+              </div>
+            </Paper>
           </Grid>
+          )}
           {this.state.reallocationOn && (
             <Grid item xs={12}>
               <Button onClick={this.setTarget} fullWidth="true" variant="contained" color="secondary" className="TOPBUTTON">
@@ -296,7 +376,7 @@ class Portfolio extends React.Component {
               </Button>
             </Grid>
             <Grid item xs={6}>
-              <Button onClick={this.setTarget} fullWidth="true" variant="contained" color="secondary" className="TOPBUTTON">
+              <Button onClick={this.executeRecommend} fullWidth="true" variant="contained" color="secondary" className="TOPBUTTON">
                 EXECUTE
               </Button>
             </Grid>

@@ -9,26 +9,6 @@ import { withStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import { Redirect} from 'react-router-dom';
 
-const styles = theme => ({
-  // button: {
-  //   display: "flex",
-  //   margin: 20
-  // },
-  // input: {
-  //   display: "flex"
-  // },
-  // textField: {
-  //   display: "flex",
-  //   margin: 20,
-  //   padding: 30,
-  //   width: 200
-  // },
-  // root: {
-  //   flexGrow: 1,
-  // }
-
-});
-
 
 const uid = 3000;
 
@@ -45,7 +25,6 @@ class Login extends Component {
   }
 
   handleLogin() {
-    console.log("???");
     this.setState({
       toDashboard: true
     });
@@ -63,8 +42,8 @@ class Login extends Component {
         toDashboard: false
       })
       return <Redirect to={{
-                      pathname:'/dashboard',
-                      state: {id: this.state.idValue} 
+                pathname:'/dashboard',
+                state: {id: this.state.idValue} 
           }}
       />;
     }

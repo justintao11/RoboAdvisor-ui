@@ -50,7 +50,8 @@ class Dashboard extends React.Component {
     this.state = {
       selected: null,
       toPortfolio: false,
-      totalAssets: 0
+      totalAssets: 0,
+      userId: props.location.state.id
     }
     this.handleClick = this.handleClick.bind(this);
     this.getPortfolio = this.getPortfolio.bind(this);
@@ -58,7 +59,7 @@ class Dashboard extends React.Component {
   }
 
   componentDidMount(){
-    console.log("something mounted");
+    console.log(this.props);
     // hardcoded total assets for custid = 73648
     this.getTotalAssets("73648");
   }
@@ -148,13 +149,15 @@ class Dashboard extends React.Component {
 
 
   render() {
-
-    const data = this.props.location.state.id;
     if (this.state.toPortfolio === true) {
       this.setState({
         toPortfolio: false
       })
-      return <Redirect to='/portfolio' />
+      return <Redirect to={{
+                pathname:'/portfolio',
+                state: {id: this.state.userId} 
+            }}
+      />;
     }
 
     return (
@@ -171,7 +174,7 @@ class Dashboard extends React.Component {
                 />
                 <CardContent>
                   <Typography gutterBottom variant="h5" component="h2">
-                    Welcome! User {data}
+                    Welcome! User {this.state.userId}
                   </Typography>
                 </CardContent>
             </TCard>
