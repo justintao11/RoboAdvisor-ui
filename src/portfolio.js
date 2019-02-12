@@ -101,7 +101,8 @@ class Portfolio extends React.Component {
       selected: null,
       reallocationOn: false,
       recommandOn:false,
-      target1: 20
+      target1: 20,
+      fundb: 0
     }
     this.handleReallocationClick = this.handleReallocationClick.bind(this);
   }
@@ -218,7 +219,7 @@ class Portfolio extends React.Component {
           </Grid>
           <Grid item xs={6}>
             <Paper className="paper1">
-              <Typography variant="body2" className="title">Recommendation for fund {"B"} :</Typography>
+              <Typography variant="h6" className="title">Recommendation: fund{"B"} :</Typography>
               <div className="rellocationRow">
                 <Button variant="contained" color="default" className="TOPBUTTON">
                   Sell
@@ -226,6 +227,19 @@ class Portfolio extends React.Component {
                 <Button variant="contained" color="secondary" className="TOPBUTTON">
                   Buy
                 </Button>
+                <TextField
+                    id="outlined-number"
+                    label="Number"
+                    value={this.state.fundb}
+                    onChange={this.handleChange('bundb')}
+                    type="number"
+                    className="textField"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    margin="normal"
+                    variant="outlined"
+                />
                 <Typography> UNITS</Typography>
               </div>
             </Paper>
