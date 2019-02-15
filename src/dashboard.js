@@ -112,7 +112,7 @@ class Dashboard extends React.Component {
   
 
   getPortfolio(custId, portfolioId) {
-    let baseURL = "http://fund-rebalancer.hsbc-roboadvisor.appspot.com/";
+    let baseURL = "https://fund-rebalancer-dot-hsbc-roboadvisor.appspot.com/";
 
       let headers = {
         'x-custid': custId
@@ -144,10 +144,7 @@ class Dashboard extends React.Component {
 
   handleClick = (e) => {
     console.log(e.target.value)
-    //this.getPortfolio(1,1);
-    this.setState({
-      toPortfolio: true
-    });
+    this.getPortfolio(1,1);
   }
 
 
