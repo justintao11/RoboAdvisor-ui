@@ -144,7 +144,10 @@ class Dashboard extends React.Component {
 
   handleClick = (e) => {
     console.log(e.target.value)
-    this.getPortfolio(1,1);
+    //this.getPortfolio(1,1);
+    this.setState({
+      toPortfolio: true
+    });
   }
 
 
