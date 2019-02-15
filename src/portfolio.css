@@ -1,0 +1,19 @@
+.doughnutChart {
+
+}
+
+.TOPBUTTON {
+	width: 120px;
+	margin-right: 20px !important;
+}
+
+.fundCard {
+	height: 200px;
+}
+
+.rellocationRow {
+	display: flex;
+	flex-direction: row;
+	text-align: center;
+	align-items: center;
+}
