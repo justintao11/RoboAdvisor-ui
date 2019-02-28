@@ -1,16 +1,16 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
+// import logo from './logo.svg';
 import './App.css';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
-import { withStyles } from '@material-ui/core/styles';
+// import { withStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import { Redirect} from 'react-router-dom';
 
 
-const uid = 3000;
+// const uid = 3000;
 
 
 class Login extends Component {
@@ -38,9 +38,9 @@ class Login extends Component {
 
   render() {
     if (this.state.toDashboard === true) {
-      this.setState({
-        toDashboard: false
-      })
+      // this.setState({
+      //   toDashboard: false
+      // })
       return <Redirect to={{
                 pathname:'/dashboard',
                 state: {id: this.state.idValue} 
@@ -67,10 +67,10 @@ class Login extends Component {
                 <Grid container spacing={24}>
                   <Grid item xs={12}>
                       <TextField
-                      placeholder="Plase enter User ID"
+                      placeholder="Enter Customer ID"
                       value={this.state.idValue}
                       id="outlined-dense"
-                      label="User ID"
+                      label="Customer ID"
                       className="dense"
                       margin="dense"
                       onChange={this.handleUserIDChange}

@@ -1,15 +1,23 @@
 import React from "react";
-import {
-  Card as TCard,
-  CardHeader,
-  CardBody,
-  CardFooter,
-  CardTitle,
-  Row,
-  Col
-} from "reactstrap";
+// import {
+//   Card as TCard,
+//   CardHeader,
+//   CardBody,
+//   CardFooter,
+//   CardTitle,
+//   Row,
+//   Col
+// } from "reactstrap";
 // react plugin used to create charts
-import { Line, Pie, Doughnut} from "react-chartjs-2";
+import {
+  Doughnut
+} from "react-chartjs-2";
+// import {
+//   Line,
+//   Pie,
+//   Doughnut
+// } from "react-chartjs-2";
+
 // function that returns a color based on an interval of numbers
 import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
@@ -17,13 +25,13 @@ import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
 import './portfolio.css';
-import Stats from "./Stats.jsx";
+// import Stats from "./Stats.jsx";
 import { Redirect} from 'react-router-dom';
 
 import {
-  dashboard24HoursPerformanceChart,
+  // dashboard24HoursPerformanceChart,
   dashboardEmailStatisticsChart,
-  dashboardNASDAQChart
+  // dashboardNASDAQChart
 } from "./variables/charts.jsx";
 
 // var myDoughnutChart = new Chart(ctx, {
@@ -95,6 +103,7 @@ const data2 = {
   }]
 };
 
+const request = require('request');
 class Portfolio extends React.Component {
   constructor(props) {
     super(props);
@@ -105,9 +114,38 @@ class Portfolio extends React.Component {
       target1: 20,
       fundb: 0,
       toDashboard: false,
-      userId: props.location.state.id
+      portfolioId: props.location.state.portfolioId,
+      userId: props.location.state.userId,
+      selectedPortfolioJSON: null
     }
+
     this.handleReallocationClick = this.handleReallocationClick.bind(this);
+  }
+
+  componentDidMount() {
+    this.getPortfolioPreferenceDetails(this.state.userId, this.state.portfolioId);
+  }
+
+  getPortfolioPreferenceDetails(custId, portfolioId) {
+    let baseURL = "https://fund-rebalancer-dot-hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/";
+    let headers = {
+      'x-custid': custId
+    }
+    let options = {
+      url: baseURL + portfolioId,
+      method: 'GET',
+      headers: headers
+    }
+
+    request(options, (error, response, body) => {
+      if (!error && response.statusCode === 200) {
+        this.setState({
+          selectedPortfolioJSON : JSON.parse(body)
+        })
+      } else {
+        console.log(error);
+      }
+    });
   }
 
   handleChange = name => event => {
@@ -144,9 +182,6 @@ class Portfolio extends React.Component {
 
   render() {
     if (this.state.toDashboard === true) {
-      this.setState({
-        toDashboard: false
-      })
       return <Redirect to={{
                 pathname:'/dashboard',
                 state: {id: this.state.userId} 
@@ -168,7 +203,7 @@ class Portfolio extends React.Component {
           </Grid>
           <Grid item xs={12}>
             <Typography variant="h2" className="title">
-              Portfolio A
+              Portfolio ID: {this.state.portfolioId}
             </Typography>
           </Grid>
           <Grid item xs={this.state.recommandOn? 3 : 9}>
@@ -363,7 +398,7 @@ class Portfolio extends React.Component {
           )}
           {this.state.reallocationOn && (
             <Grid item xs={12}>
-              <Button onClick={this.setTarget} fullWidth="true" variant="contained" color="secondary" className="TOPBUTTON">
+              <Button onClick={this.setTarget} fullWidth={true} variant="contained" color="secondary" className="TOPBUTTON">
                 SET TARGET
               </Button>
             </Grid>
@@ -371,12 +406,12 @@ class Portfolio extends React.Component {
           {this.state.recommandOn && (
             <Grid container spacing={24}>
             <Grid item xs={6}>
-              <Button onClick={this.setTarget} fullWidth="true" variant="contained" color="secondary" className="TOPBUTTON">
+              <Button onClick={this.setTarget} fullWidth={true} variant="contained" color="secondary" className="TOPBUTTON">
                 MODIFY
               </Button>
             </Grid>
             <Grid item xs={6}>
-              <Button onClick={this.executeRecommend} fullWidth="true" variant="contained" color="secondary" className="TOPBUTTON">
+              <Button onClick={this.executeRecommend} fullWidth={true} variant="contained" color="secondary" className="TOPBUTTON">
                 EXECUTE
               </Button>
             </Grid>
