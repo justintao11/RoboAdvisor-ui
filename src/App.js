@@ -1,12 +1,18 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
+//import logo from './logo.svg';
 import './App.css';
 import Login from './login.js';
 import Dashboard from './dashboard.js';
 import Portfolio from './portfolio.js';
 
+// import {
+//   BrowserRouter as Router,
+//   Switch,
+//   // Link,
+//   Route
+// } from 'react-router-dom';
 
-import { BrowserRouter as Router,Switch, Link, Route } from 'react-router-dom';
+import { BrowserRouter as Router,Switch, Route } from 'react-router-dom';
 
 class App extends Component {
   render() {
