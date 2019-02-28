@@ -51,7 +51,7 @@ class Dashboard extends React.Component {
       selected: null,
       toLogin: false,
       toPortfolio: false,
-      totalAssets: 123456,
+      totalAssets: 0,
       portfolioId: 24646784,
       userId: props.location.state.id
     }
@@ -65,49 +65,28 @@ class Dashboard extends React.Component {
   }
 
   getTotalAssets(custId){
-    //let baseURL = "https://fund-rebalancer-dot-hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/1784575";
-    let baseURL = "https://us-central1-useful-memory-229303.cloudfunctions.net/portfolios2";
-    let total = 0;
+    let baseURL = "http://fund-rebalancer.hsbc-roboadvisor.appspot.com";
     let headers = {
       'x-custid': custId
     }
     let options = {
-      url: baseURL,
+      url: baseURL + "/roboadvisor/fundsystem/funds/total",
       method: 'GET',
       headers: headers
     }
   
     request(options, (error, response, body) => {
         if (!error && response.statusCode === 200) {
-            let info = JSON.parse(body);
-    
-            // Calculate total assets of each fund in all portfolios
-            for (let key in info){
-              if (info.hasOwnProperty(key)){
-                let val = info[key];
-                let holdings = val.holdings;
-
-                for (let fund in holdings){
-                  if (holdings.hasOwnProperty(fund)){
-                    let val1 = holdings[fund];
-                    let amount = val1.balance.amount;
-                    total += amount;                      
-                  }
-                }
-              }
-            }
-
-            this.setState({
-              totalAssets: total
-            });
-
+          let info = JSON.parse(body)
+          this.setState({
+            totalAssets: info
+          })
         } else {
           console.log(error);
         }
       });   
   }
   
-
   getPortfolio(custId, portfolioId) {
     let baseURL = "https://fund-rebalancer-dot-hsbc-roboadvisor.appspot.com/";
 
