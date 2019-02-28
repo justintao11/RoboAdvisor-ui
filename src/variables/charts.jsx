@@ -173,7 +173,8 @@ const dashboardNASDAQChart = {
         pointBorderColor: "#fbc658",
         pointRadius: 4,
         pointHoverRadius: 4,
-        pointBorderWidth: 8
+        pointBorderWidth: 8, 
+        label: 1
       },
       {
         data: [0, 5, 10, 12, 20, 27, 30, 34, 42, 45, 55, 63],
@@ -183,7 +184,8 @@ const dashboardNASDAQChart = {
         pointBorderColor: "#51CACF",
         pointRadius: 4,
         pointHoverRadius: 4,
-        pointBorderWidth: 8
+        pointBorderWidth: 8, 
+        label: 2
       }
     ]
   },
