@@ -1,4 +1,6 @@
-import React, { Component } from 'react';
+import React, {
+  Component
+} from 'react';
 // import logo from './logo.svg';
 import './App.css';
 import Paper from '@material-ui/core/Paper';
@@ -7,14 +9,16 @@ import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
 // import { withStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
-import { Redirect} from 'react-router-dom';
+import {
+  Redirect
+} from 'react-router-dom';
 
 class Login extends Component {
   constructor(props) {
     super(props);
     this.state = {
       toDashboard: false,
-      idValue: ''
+      customerId: ""
     }
     this.handleLogin = this.handleLogin.bind(this);
     this.handleUserIDChange = this.handleUserIDChange.bind(this);
@@ -28,22 +32,22 @@ class Login extends Component {
 
   handleUserIDChange = (e) => {
     this.setState({
-      idValue: e.target.value
+      customerId: e.target.value
     })
   }
-
+  
   render() {
-      if (this.state.toDashboard === true) {
-        return <Redirect to = {
-          {
-            pathname: '/dashboard',
-            state: {
-              id: this.state.idValue
-            }
+    if (this.state.toDashboard === true) {
+      return <Redirect to = {
+        {
+          pathname: '/dashboard',
+          state: {
+            id: this.state.customerId
           }
         }
-        />;
       }
+      />;
+    }
 
     return (
       <div className="App">
@@ -89,4 +93,3 @@ class Login extends Component {
 }
 
 export default Login;
-
