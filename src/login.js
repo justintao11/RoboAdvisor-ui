@@ -9,10 +9,6 @@ import TextField from '@material-ui/core/TextField';
 import Grid from '@material-ui/core/Grid';
 import { Redirect} from 'react-router-dom';
 
-
-// const uid = 3000;
-
-
 class Login extends Component {
   constructor(props) {
     super(props);
@@ -37,18 +33,17 @@ class Login extends Component {
   }
 
   render() {
-    if (this.state.toDashboard === true) {
-      // this.setState({
-      //   toDashboard: false
-      // })
-      return <Redirect to={{
-                pathname:'/dashboard',
-                state: {id: this.state.idValue} 
-          }}
-      />;
-    }
-
-    
+      if (this.state.toDashboard === true) {
+        return <Redirect to = {
+          {
+            pathname: '/dashboard',
+            state: {
+              id: this.state.idValue
+            }
+          }
+        }
+        />;
+      }
 
     return (
       <div className="App">

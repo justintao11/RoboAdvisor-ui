@@ -16,7 +16,7 @@ import Grid from '@material-ui/core/Grid';
 // import Card from '@material-ui/core/Card';
 import CardMedia from '@material-ui/core/CardMedia';
 import CardContent from '@material-ui/core/CardContent';
-// import Button from '@material-ui/core/Button';
+import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 // import Stats from "./Stats.jsx";
 // import CardActions from '@material-ui/core/CardActions';
@@ -41,8 +41,6 @@ import {
 } from "./variables/charts.jsx";
 
 const request = require('request');
-
-
 
 class Dashboard extends React.Component {
   constructor(props) {
@@ -90,59 +88,69 @@ class Dashboard extends React.Component {
   getPortfolio(custId, portfolioId) {
     let baseURL = "https://fund-rebalancer-dot-hsbc-roboadvisor.appspot.com/";
 
-      let headers = {
-        'x-custid': custId
-      }
-   
-      let options = {
-        url: baseURL + "roboadvisor/portfolio/" + portfolioId,
-        //url: "http://fund-rebalancer.hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/1x1",
-        method: 'GET',
-        headers: headers
-      }
+    let headers = {
+      'x-custid': custId
+    }
 
-      let that = this;
-   
-      request(options, function (error, response, body) {
-          if (!error && response.statusCode === 200) {
-              // Print out the response body
-              let info = JSON.parse(body);
-              that.setState({
-                toPortfolio: true
-              });
-              console.log(info);
-              // console.log(response);
-              // console.log(error);
-          } else {
-            console.log(error);
-          }
-      });   
+    let options = {
+      url: baseURL + "roboadvisor/portfolio/" + portfolioId,
+      method: 'GET',
+      headers: headers
+    }
+
+    let that = this;
+
+    request(options, function (error, response, body) {
+      if (!error && response.statusCode === 200) {
+        let info = JSON.parse(body);
+        that.setState({
+          toPortfolio: true
+        });
+        console.log(info);
+      } else {
+        console.log(error);
+      }
+    });
   }
 
   handleClick = (e) => {
     this.getPortfolio(this.state.userId, 1784575);
   }
 
+  handleLogout = (e) => {
+    this.setState({
+      toLogin: true
+    })
+  }
 
   render() {
-    if (this.state.toPortfolio === true) {
-      // this.setState({
-      //   toPortfolio: false
-      // })
-      return <Redirect to={{
-                pathname:'/portfolio',
-                state: {
-                  userId: this.state.userId,
-                  portfolioId: this.state.portfolioId
-                } 
-            }}
-      />;
-    }
+      if (this.state.toLogin === true) {
+        return <Redirect to = {
+          {
+            pathname: '/'
+          }
+        }
+        />;
+      } else if (this.state.toPortfolio === true) {
+        return <Redirect to = {
+          {
+            pathname: '/portfolio',
+            state: {
+              userId: this.state.userId,
+              portfolioId: this.state.portfolioId
+            }
+          }
+        }
+        />;
+      }
 
     return (
       <div className="dashboardContainer">
         <Grid container spacing={24}>
           <Grid item xs={3}>
+              <Button variant="contained" onClick={this.handleLogout} color="secondary" className="TOPBUTTON">
+                Logout
+              </Button>
             <TCard className="card">
                 <CardMedia
                   style={{height: 0, paddingTop: '82%'}}
