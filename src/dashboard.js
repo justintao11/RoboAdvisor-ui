@@ -9,7 +9,7 @@ import {
   Col
 } from "reactstrap";
 // react plugin used to create charts
-import { Line, Pie } from "react-chartjs-2";
+import { Line, Pie, Bar } from "react-chartjs-2";
 // function that returns a color based on an interval of numbers
 // import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
@@ -32,6 +32,7 @@ import FolderIcon from '@material-ui/icons/Folder';
 // import DeleteIcon from '@material-ui/icons/Delete';
 import TuneIcon from '@material-ui/icons/Tune';
 import { Redirect} from 'react-router-dom';
+import Example from './barChart.js';
 import './dashboard.css';
 
 import {
@@ -148,9 +149,6 @@ class Dashboard extends React.Component {
       <div className="dashboardContainer">
         <Grid container spacing={24}>
           <Grid item xs={3}>
-              <Button variant="contained" onClick={this.handleLogout} color="secondary" className="TOPBUTTON">
-                Logout
-              </Button>
             <TCard className="card">
                 <CardMedia
                   style={{height: 0, paddingTop: '82%'}}
@@ -162,6 +160,9 @@ class Dashboard extends React.Component {
                   <Typography gutterBottom variant="h5" component="h2">
                     Welcome! User {this.state.userId}
                   </Typography>
+                  <Button variant="contained" onClick={this.handleLogout} color="secondary" className="TOPBUTTON">
+                    Logout
+                  </Button>
                 </CardContent>
             </TCard>
           </Grid>
@@ -213,12 +214,7 @@ class Dashboard extends React.Component {
                 <CardTitle>Portfolio Performance</CardTitle>
               </CardHeader>
               <CardBody>
-                <Line
-                  data={dashboardNASDAQChart.data}
-                  options={dashboardNASDAQChart.options}
-                  width={250}
-                  height={100}
-                />
+                <Example/>
               </CardBody>
               {/* <CardFooter>
                 <div className="chart-legend">
@@ -238,7 +234,7 @@ class Dashboard extends React.Component {
             </TCard>
           </Grid>
           <Grid item xs={12}>
-            < Typography variant = "title" className = "subheading" >
+            <Typography variant = "title" className = "subheading">
               My Portfolios
             </Typography>
             <div className="list">

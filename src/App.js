@@ -5,6 +5,7 @@ import Login from './login.js';
 import Dashboard from './dashboard.js';
 import Portfolio from './portfolio.js';
 
+
 // import {
 //   BrowserRouter as Router,
 //   Switch,
@@ -23,7 +24,6 @@ class App extends Component {
         	<Route path='/dashboard' component={Dashboard}/>
           <Route path='/portfolio' component={Portfolio}/>
       	</Switch>
-        
       </Router>
     );
   }
