@@ -127,14 +127,12 @@ class Portfolio extends React.Component {
   }
 
   getPortfolioPreferenceDetails(custId, portfolioId) {
-    let baseURL = "https://fund-rebalancer-dot-hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/";
-    let headers = {
-      'x-custid': custId
-    }
     let options = {
-      url: baseURL + portfolioId,
+      url: "https://fund-rebalancer-dot-hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/" + portfolioId,
       method: 'GET',
-      headers: headers
+      headers: {
+        'x-custid': custId
+      }
     }
 
     request(options, (error, response, body) => {
@@ -143,7 +141,7 @@ class Portfolio extends React.Component {
           selectedPortfolioJSON : JSON.parse(body)
         })
       } else {
-        console.log(error);
+        console.log(response.body);
       }
     });
   }
