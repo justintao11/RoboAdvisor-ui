@@ -21,7 +21,7 @@ class Login extends Component {
       customerId: ""
     }
     this.handleLogin = this.handleLogin.bind(this);
-    this.handleUserIDChange = this.handleUserIDChange.bind(this);
+    this.handleCustomerIdChange = this.handleCustomerIdChange.bind(this);
   }
 
   handleLogin() {
@@ -30,7 +30,7 @@ class Login extends Component {
     });
   }
 
-  handleUserIDChange = (e) => {
+  handleCustomerIdChange = (e) => {
     this.setState({
       customerId: e.target.value
     })
@@ -72,7 +72,7 @@ class Login extends Component {
                       label="Customer ID"
                       className="dense"
                       margin="dense"
-                      onChange={this.handleUserIDChange}
+                      onChange={this.handleCustomerIdChange}
                       variant="outlined"
                     />
                   </Grid>

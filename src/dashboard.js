@@ -1,7 +1,7 @@
 import React from "react";
 import {
   Card as TCard,
-  CardHeader,
+  // CardHeader,
   CardBody,
   // CardFooter,
   CardTitle,
@@ -9,12 +9,12 @@ import {
   Col
 } from "reactstrap";
 // react plugin used to create charts
-import { Line, Pie } from "react-chartjs-2";
+// import { Line, Pie } from "react-chartjs-2";
 // function that returns a color based on an interval of numbers
 // import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
 // import Card from '@material-ui/core/Card';
-import CardMedia from '@material-ui/core/CardMedia';
+// import CardMedia from '@material-ui/core/CardMedia';
 import CardContent from '@material-ui/core/CardContent';
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
@@ -31,16 +31,65 @@ import IconButton from '@material-ui/core/IconButton';
 import FolderIcon from '@material-ui/icons/Folder';
 // import DeleteIcon from '@material-ui/icons/Delete';
 import TuneIcon from '@material-ui/icons/Tune';
-import { Redirect} from 'react-router-dom';
+import { Redirect } from 'react-router-dom';
 import './dashboard.css';
 
-import {
-  // dashboard24HoursPerformanceChart,
-  dashboardEmailStatisticsChart,
-  dashboardNASDAQChart
-} from "./variables/charts.jsx";
+// import {
+//   // dashboard24HoursPerformanceChart,
+//   dashboardEmailStatisticsChart,
+//   dashboardNASDAQChart
+// } from "./variables/charts.jsx";
 
 const request = require('request');
+
+function Portfolio(props) {
+  return (
+    <div>
+    <ListItem button onClick={props.onClick}>
+      <ListItemAvatar>
+        <Avatar>
+          <FolderIcon />
+        </Avatar>
+      </ListItemAvatar>
+      <ListItemText
+        primary={"Portfolio: " + props.value}
+      />
+      <ListItemSecondaryAction>
+        <IconButton aria-label="Tune">
+          <TuneIcon />
+        </IconButton>
+      </ListItemSecondaryAction>
+    </ListItem>
+    </div>
+  );
+}
+
+class PortfolioList extends React.Component {
+  renderPortfolios(i) {
+    return (
+      <div key={"portfolio " + i}>
+      <Portfolio
+        value={this.props.portfolioList[i].id}
+        onClick={() => this.props.onClick(this.props.portfolioList[i].id)}
+      />
+      </div>
+    );
+  }
+
+  render() {
+    let portfolioArray = []
+    for (let i = 0; i < this.props.portfolioList.length; i++) {
+      portfolioArray.push(this.renderPortfolios(i))
+    }
+    return (
+      <div> 
+        <List dense={false}>
+          {portfolioArray}
+        </List>
+      </div>
+    );
+  }
+}
 
 class Dashboard extends React.Component {
   constructor(props) {
@@ -51,70 +100,88 @@ class Dashboard extends React.Component {
       toPortfolio: false,
       totalAssets: 0,
       portfolioId: 24646784,
-      userId: props.location.state.id
+      userId: props.location.state.id,
+      portfolioList: Array(2).fill(1)
     }
     this.handleClick = this.handleClick.bind(this);
     this.getPortfolio = this.getPortfolio.bind(this);
     this.getTotalAssets = this.getTotalAssets.bind(this);
+    this.getPortfolioList = this.getPortfolioList.bind(this);
   }
 
-  componentDidMount(){
+  componentDidMount() {
     this.getTotalAssets(this.state.userId);
+    this.getPortfolioList(this.state.userId);
   }
 
-  getTotalAssets(custId){
-    let baseURL = "http://fund-rebalancer.hsbc-roboadvisor.appspot.com";
-    let headers = {
-      'x-custid': custId
-    }
+  getPortfolioList(custId) {
     let options = {
-      url: baseURL + "/roboadvisor/fundsystem/funds/total",
+      url: "https://fund-rebalancer-dot-hsbc-roboadvisor.appspot.com/roboadvisor/fundsystem/portfolios",
       method: 'GET',
-      headers: headers
+      headers: {
+        'x-custid': custId
+      }
     }
-  
+
     request(options, (error, response, body) => {
-        if (!error && response.statusCode === 200) {
-          let info = JSON.parse(body)
-          this.setState({
-            totalAssets: info
-          })
-        } else {
-          console.log(error);
-        }
-      });   
-  }
-  
-  getPortfolio(custId, portfolioId) {
-    let baseURL = "https://fund-rebalancer-dot-hsbc-roboadvisor.appspot.com/";
-
-    let headers = {
-      'x-custid': custId
-    }
-
-    let options = {
-      url: baseURL + "roboadvisor/portfolio/" + portfolioId,
-      method: 'GET',
-      headers: headers
-    }
-
-    let that = this;
-
-    request(options, function (error, response, body) {
       if (!error && response.statusCode === 200) {
         let info = JSON.parse(body);
-        that.setState({
-          toPortfolio: true
-        });
-        console.log(info);
+        this.setState({
+          portfolioList: info
+        })
       } else {
-        console.log(error);
+        console.log(response.body);
       }
     });
   }
 
-  handleClick = (e) => {
-    this.getPortfolio(this.state.userId, 1784575);
+  getTotalAssets(custId) {
+    let options = {
+      url: "https://fund-rebalancer-dot-hsbc-roboadvisor.appspot.com/roboadvisor/fundsystem/funds/total",
+      method: 'GET',
+      headers: {
+        'x-custid': custId
+      }
+    }
+
+    request(options, (error, response, body) => {
+      if (!error && response.statusCode === 200) {
+        let info = JSON.parse(body)
+        this.setState({
+          totalAssets: info
+        })
+      } else {
+        console.log(response.body);
+      }
+    });
+  }
+
+  getPortfolio(custId, portfolioId) {
+    console.log("getPortfolio " + custId + " " + portfolioId)
+    let options = {
+      url: "https://fund-rebalancer-dot-hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/" + portfolioId,
+      method: 'GET',
+      headers: {
+        'x-custid': custId
+      }
+    }
+
+    request(options, (error, response, body) => {
+      if (!error && response.statusCode === 200) {
+        let info = JSON.parse(body);
+        console.log(info)
+        this.setState({
+          toPortfolio: true
+        });
+      } else {
+        console.log(response.body);
+      }
+    });
+  }
+
+  handleClick(i) {
+    console.log("this is handleClick: " + i)
+    this.getPortfolio(this.state.userId, i);
   }
 
   handleLogout = (e) => {
@@ -124,48 +191,40 @@ class Dashboard extends React.Component {
   }
 
   render() {
-      if (this.state.toLogin === true) {
-        return <Redirect to = {
-          {
-            pathname: '/'
-          }
+    if (this.state.toLogin === true) {
+      return <Redirect to={
+        {
+          pathname: '/'
         }
-        />;
-      } else if (this.state.toPortfolio === true) {
-        return <Redirect to = {
-          {
-            pathname: '/portfolio',
-            state: {
-              userId: this.state.userId,
-              portfolioId: this.state.portfolioId
-            }
-          }
-        }
-        />;
       }
+      />;
+    } else if (this.state.toPortfolio === true) {
+      return <Redirect to={
+        {
+          pathname: '/portfolio',
+          state: {
+            userId: this.state.userId,
+            portfolioId: this.state.portfolioId
+          }
+        }
+      }
+      />;
+    }
 
     return (
       <div className="dashboardContainer">
+        <Button className="logoutButton" variant="contained" onClick={this.handleLogout} color="secondary" >
+          Logout
+      </Button>
         <Grid container spacing={24}>
-          <Grid item xs={3}>
-              <Button variant="contained" onClick={this.handleLogout} color="secondary" className="TOPBUTTON">
-                Logout
-              </Button>
-            <TCard className="card">
-                <CardMedia
-                  style={{height: 0, paddingTop: '82%'}}
-                  className="media"
-                  image={require("./assets/img/logo-small.png")}
-                  title="Contemplative Reptile"
-                />
-                <CardContent>
-                  <Typography gutterBottom variant="h5" component="h2">
-                    Welcome! User {this.state.userId}
-                  </Typography>
-                </CardContent>
+          <Grid item xs={12}>
+            <TCard className="UserInfo">
+              <CardContent>
+                <Typography gutterBottom variant="h5" component="h2">
+                  Welcome! User {this.state.userId}
+                </Typography>
+              </CardContent>
             </TCard>
-          </Grid>
-          <Grid item xs={3}>
             <TCard className="card-stats">
               <CardBody>
                 <Row>
@@ -187,6 +246,19 @@ class Dashboard extends React.Component {
                 </Row>
               </CardBody>
             </TCard>
+          </Grid>
+          <Grid item xs={12}>
+            < Typography variant="title" className="subheading" >
+              My Portfolios
+            </Typography>
+            <PortfolioList
+              portfolioList={this.state.portfolioList}
+              onClick={i => this.handleClick(i)}
+            />
+          </Grid>
+
+{/* 
+          <Grid item xs={6}>
             <TCard>
               <CardHeader>
                 <CardTitle>Funds Percentage</CardTitle>
@@ -197,17 +269,18 @@ class Dashboard extends React.Component {
                   options={dashboardEmailStatisticsChart.options}
                 />
               </CardBody>
-              {/* <CardFooter>
+              <CardFooter>
                 <div className="legend">
                   <i className="fa fa-circle text-primary" /> Opened{" "}
                   <i className="fa fa-circle text-warning" /> Read{" "}
                   <i className="fa fa-circle text-danger" /> Deleted{" "}
                   <i className="fa fa-circle text-gray" /> Unopened
                 </div>
-              </CardFooter> */}
+              </CardFooter>
             </TCard>
-          </Grid>
-          <Grid item xs={6}>
+          </Grid> */}
+          
+          {/* <Grid item xs={6}>
             <TCard className="card-chart">
               <CardHeader>
                 <CardTitle>Portfolio Performance</CardTitle>
@@ -220,13 +293,13 @@ class Dashboard extends React.Component {
                   height={100}
                 />
               </CardBody>
-              {/* <CardFooter>
+              <CardFooter>
                 <div className="chart-legend">
                   <i className="fa fa-circle text-info" /> Tesla Model S{" "}
                   <i className="fa fa-circle text-warning" /> BMW 5 Series
                 </div>
                 <hr />
-                {/* <Stats>
+                <Stats>
                   {[
                     {
                       i: "fas fa-check",
@@ -234,66 +307,9 @@ class Dashboard extends React.Component {
                     }
                   ]}
                 </Stats>
-              </CardFooter> */}
+              </CardFooter>
             </TCard>
-          </Grid>
-          <Grid item xs={12}>
-            < Typography variant = "title" className = "subheading" >
-              My Portfolios
-            </Typography>
-            <div className="list">
-              <List dense={false}>
-                  <ListItem button value="500" onClick={this.handleClick}>
-                    <ListItemAvatar>
-                      <Avatar>
-                        <FolderIcon />
-                      </Avatar>
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary="Portfolio A"
-                      // secondary="some descriptions"
-                    />
-                    <ListItemSecondaryAction>
-                      <IconButton aria-label="Tune">
-                        <TuneIcon />
-                      </IconButton>
-                    </ListItemSecondaryAction>
-                  </ListItem>
-                  <ListItem button>
-                    <ListItemAvatar>
-                      <Avatar>
-                        <FolderIcon />
-                      </Avatar>
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary="Portfolio B"
-                      // secondary="some descriptions"
-                    />
-                    <ListItemSecondaryAction>
-                      <IconButton aria-label="Tune">
-                        <TuneIcon />
-                      </IconButton>
-                    </ListItemSecondaryAction>
-                  </ListItem>
-                  <ListItem button>
-                    <ListItemAvatar>
-                      <Avatar>
-                        <FolderIcon />
-                      </Avatar>
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary="Portfolio C"
-                      // secondary="some descriptions"
-                    />
-                    <ListItemSecondaryAction>
-                      <IconButton aria-label="Tune">
-                        <TuneIcon />
-                      </IconButton>
-                    </ListItemSecondaryAction>
-                  </ListItem>
-              </List>
-            </div>
-          </Grid>
+          </Grid> */}
         </Grid>
       </div>
     );
