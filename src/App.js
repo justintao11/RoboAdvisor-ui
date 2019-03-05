@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-// import './App.css';
 import Login from './login.js';
 import Dashboard from './dashboard.js';
 import Portfolio from './portfolio.js';
