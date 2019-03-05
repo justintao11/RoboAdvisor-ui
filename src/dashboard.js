@@ -24,13 +24,14 @@ import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemAvatar from '@material-ui/core/ListItemAvatar';
 // import ListItemIcon from '@material-ui/core/ListItemIcon';
-import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
+// import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import ListItemText from '@material-ui/core/ListItemText';
 import Avatar from '@material-ui/core/Avatar';
 import IconButton from '@material-ui/core/IconButton';
 import FolderIcon from '@material-ui/icons/Folder';
 // import DeleteIcon from '@material-ui/icons/Delete';
 import TuneIcon from '@material-ui/icons/Tune';
+import AssessmentIcon from '@material-ui/icons/Assessment'
 import { Redirect } from 'react-router-dom';
 import './dashboard.css';
 
@@ -42,24 +43,67 @@ import './dashboard.css';
 
 const request = require('request');
 
-function Portfolio(props) {
-  return (
-    <div>
-    <ListItem button onClick={props.onClick}>
-      <ListItemAvatar>
-        <Avatar>
-          <FolderIcon />
-        </Avatar>
-      </ListItemAvatar>
-      <ListItemText
-        primary={"Portfolio: " + props.value}
-      />
-      <ListItemSecondaryAction>
+class PortfolioIconsShown extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      isPreferenceSet: false,
+      isRebalanceRequired: false
+    }
+  }
+
+  componentDidMount() {
+    this.getPortfolioPreference(this.props.customerId, this.props.portfolioId)
+  }
+
+  getPortfolioPreference(custId, portfolioId) {
+    let options = {
+      url: "https://fund-rebalancer-dot-hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/" + portfolioId,
+      method: 'GET',
+      headers: {
+        'x-custid': custId
+      }
+    }
+
+    request(options, (error, response, body) => {
+      if (!error && response.statusCode === 200) {
+        this.setState({
+          isPreferenceSet: true
+        })
+      } else {
+        console.log(response.body);
+      }
+    });
+  }
+
+  render() {
+    return (
+      <div>
+        <IconButton aria-label="Rebalance">
+          <AssessmentIcon />
+        </IconButton>
         <IconButton aria-label="Tune">
           <TuneIcon />
         </IconButton>
-      </ListItemSecondaryAction>
-    </ListItem>
+      </div>
+    )
+  }
+}
+
+function Portfolio(props) {
+  return (
+    <div className="portfolioItem">
+      <ListItem button onClick={props.onClick}>
+        <ListItemAvatar>
+          <Avatar>
+            <FolderIcon />
+          </Avatar>
+        </ListItemAvatar>
+        <ListItemText primary={"Portfolio: " + props.portfolioId} />
+        <PortfolioIconsShown
+          portfolioId={props.portfolioId}
+          customerId={props.customerId} />
+      </ListItem>
     </div>
   );
 }
@@ -68,10 +112,11 @@ class PortfolioList extends React.Component {
   renderPortfolios(i) {
     return (
       <div key={"portfolio " + i}>
-      <Portfolio
-        value={this.props.portfolioList[i].id}
-        onClick={() => this.props.onClick(this.props.portfolioList[i].id)}
-      />
+        <Portfolio
+          customerId={this.props.customerId}
+          portfolioId={this.props.portfolioList[i].id}
+          onClick={() => this.props.onClick(this.props.portfolioList[i].id)}
+        />
       </div>
     );
   }
@@ -82,7 +127,7 @@ class PortfolioList extends React.Component {
       portfolioArray.push(this.renderPortfolios(i))
     }
     return (
-      <div> 
+      <div>
         <List dense={false}>
           {portfolioArray}
         </List>
@@ -100,8 +145,11 @@ class Dashboard extends React.Component {
       toPortfolio: false,
       totalAssets: 0,
       portfolioId: 24646784,
-      userId: props.location.state.id,
-      portfolioList: Array(2).fill(1)
+      customerId: props.location.state.customerId,
+      portfolioList: Array(2).fill(1),
+      isTotalAssetsLoaded: false,
+      isPortfoliosLoaded: false,
+      isInvalidCustomer: false
     }
     this.handleClick = this.handleClick.bind(this);
     this.getPortfolio = this.getPortfolio.bind(this);
@@ -110,29 +158,8 @@ class Dashboard extends React.Component {
   }
 
   componentDidMount() {
-    this.getTotalAssets(this.state.userId);
-    this.getPortfolioList(this.state.userId);
-  }
-
-  getPortfolioList(custId) {
-    let options = {
-      url: "https://fund-rebalancer-dot-hsbc-roboadvisor.appspot.com/roboadvisor/fundsystem/portfolios",
-      method: 'GET',
-      headers: {
-        'x-custid': custId
-      }
-    }
-
-    request(options, (error, response, body) => {
-      if (!error && response.statusCode === 200) {
-        let info = JSON.parse(body);
-        this.setState({
-          portfolioList: info
-        })
-      } else {
-        console.log(response.body);
-      }
-    });
+    this.getPortfolioList(this.state.customerId);
+    this.getTotalAssets(this.state.customerId);
   }
 
   getTotalAssets(custId) {
@@ -148,13 +175,42 @@ class Dashboard extends React.Component {
       if (!error && response.statusCode === 200) {
         let info = JSON.parse(body)
         this.setState({
-          totalAssets: info
+          totalAssets: info,
+          isTotalAssetsLoaded: true
         })
       } else {
-        console.log(response.body);
+        console.log("getTotalAssets res code: " + response.statusCode)
+        console.log(error);
       }
     });
   }
+
+  getPortfolioList(custId) {
+    let options = {
+      url: "https://fund-rebalancer-dot-hsbc-roboadvisor.appspot.com/roboadvisor/fundsystem/portfolios",
+      method: 'GET',
+      headers: {
+        'x-custid': custId
+      }
+    }
+
+    request(options, (error, response, body) => {
+      if (!error && response.statusCode === 200) {
+        let info = JSON.parse(body);
+        this.setState({
+          portfolioList: info,
+          isPortfoliosLoaded: true
+        })
+      } else {
+        this.setState({
+          isInvalidCustomer: true
+        })
+        console.log("getPortfolioList res code: " + response.statusCode)
+        console.log(error);
+      }
+    });
+  }
+
 
   getPortfolio(custId, portfolioId) {
     console.log("getPortfolio " + custId + " " + portfolioId)
@@ -174,14 +230,15 @@ class Dashboard extends React.Component {
           toPortfolio: true
         });
       } else {
-        console.log(response.body);
+        console.log("getPortfolio res code: " + response.statusCode)
+        console.log(error);
       }
     });
   }
 
   handleClick(i) {
     console.log("this is handleClick: " + i)
-    this.getPortfolio(this.state.userId, i);
+    this.getPortfolio(this.state.customerId, i);
   }
 
   handleLogout = (e) => {
@@ -203,61 +260,75 @@ class Dashboard extends React.Component {
         {
           pathname: '/portfolio',
           state: {
-            userId: this.state.userId,
+            customerId: this.state.customerId,
             portfolioId: this.state.portfolioId
           }
         }
       }
       />;
-    }
-
-    return (
-      <div className="dashboardContainer">
-        <Button className="logoutButton" variant="contained" onClick={this.handleLogout} color="secondary" >
-          Logout
-      </Button>
-        <Grid container spacing={24}>
-          <Grid item xs={12}>
-            <TCard className="UserInfo">
-              <CardContent>
-                <Typography gutterBottom variant="h5" component="h2">
-                  Welcome! User {this.state.userId}
+    } else if (this.state.isInvalidCustomer) {
+      return (
+        <div>
+          Incorrect Customer ID, please try login in again.
+          <Button className="logoutButton" variant="contained" onClick={this.handleLogout} color="secondary" >
+            Logout
+          </Button>
+        </div>
+      )
+    } else if (!this.state.isPortfoliosLoaded || !this.state.isTotalAssetsLoaded) {
+      return <div>Loading...</div>;
+    } else {
+      return (
+        <div className="dashboardContainer">
+          <div className="header">
+            <Button className="logoutButton" variant="contained" onClick={this.handleLogout} color="secondary" >
+              Logout
+            </Button>
+          </div>
+          <div className="userInfo">
+            <Typography gutterBottom variant="h5" component="h2">
+              Welcome back, {this.state.customerId}!
                 </Typography>
-              </CardContent>
-            </TCard>
-            <TCard className="card-stats">
-              <CardBody>
-                <Row>
-                  <Col xs={5} md={4}>
-                    <div className="icon-big text-center">
-                      <i className="nc-icon nc-money-coins text-success" />
-                    </div>
-                  </Col>
-                  <Col xs={7} md={8}>
-                    <div className="numbers">
-                      <p className="card-category">Total Assets</p>
-                      <CardTitle tag="p">
-                        <Typography component="a">
-                          ${this.state.totalAssets.toFixed(2)}
-                        </Typography>
-                      </CardTitle>
-                    </div>
-                  </Col>
-                </Row>
-              </CardBody>
-            </TCard>
-          </Grid>
-          <Grid item xs={12}>
-            < Typography variant="title" className="subheading" >
-              My Portfolios
-            </Typography>
-            <PortfolioList
-              portfolioList={this.state.portfolioList}
-              onClick={i => this.handleClick(i)}
-            />
-          </Grid>
-
-{/* 
+          </div>
+          <Grid container justify="flex-end" spacing={16}>
+            <Grid item xs={24}>
+              <TCard className="card-stats">
+                <CardBody>
+                  <Row>
+                    <Col xs={5} md={4}>
+                      <div className="icon-big text-center">
+                        <i className="nc-icon nc-money-coins text-success" />
+                      </div>
+                    </Col>
+                    <Col xs={7} md={8}>
+                      <div className="numbers">
+                        <p className="card-category">Total Assets</p>
+                        <CardTitle tag="p">
+                          <Typography component="a">
+                            ${this.state.totalAssets.toFixed(2)}
+                          </Typography>
+                        </CardTitle>
+                      </div>
+                    </Col>
+                  </Row>
+                </CardBody>
+              </TCard>
+            </Grid>
+            <Grid item xs={12}>
+              <TCard className="UserInfo">
+                <CardContent>
+                  < Typography variant="title" className="subheading" >
+                    My Portfolios
+                  </Typography>
+                  <PortfolioList
+                    customerId={this.state.customerId}
+                    portfolioList={this.state.portfolioList}
+                    onClick={i => this.handleClick(i)}
+                  />
+                </CardContent>
+              </TCard>
+            </Grid>
+            {/* 
           <Grid item xs={6}>
             <TCard>
               <CardHeader>
@@ -279,8 +350,8 @@ class Dashboard extends React.Component {
               </CardFooter>
             </TCard>
           </Grid> */}
-          
-          {/* <Grid item xs={6}>
+
+            {/* <Grid item xs={6}>
             <TCard className="card-chart">
               <CardHeader>
                 <CardTitle>Portfolio Performance</CardTitle>
@@ -310,10 +381,11 @@ class Dashboard extends React.Component {
               </CardFooter>
             </TCard>
           </Grid> */}
-        </Grid>
-      </div>
-    );
+          </Grid>
+        </div>
+      );
+    }
   }
 }
 
-export default Dashboard;
+export default Dashboard
