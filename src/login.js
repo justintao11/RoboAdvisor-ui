@@ -1,24 +1,17 @@
-import React, {
-  Component
-} from 'react';
-// import logo from './logo.svg';
-import './App.css';
-import Paper from '@material-ui/core/Paper';
+import React from 'react';
+import './login.css';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
-// import { withStyles } from '@material-ui/core/styles';
-import Grid from '@material-ui/core/Grid';
-import {
-  Redirect
-} from 'react-router-dom';
+import { Redirect } from 'react-router-dom';
 
-class Login extends Component {
+class Login extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       toDashboard: false,
-      customerId: ""
+      customerId: "",
+      isValidCustomer: false
     }
     this.handleLogin = this.handleLogin.bind(this);
     this.handleCustomerIdChange = this.handleCustomerIdChange.bind(this);
@@ -35,60 +28,51 @@ class Login extends Component {
       customerId: e.target.value
     })
   }
-  
+
   render() {
     if (this.state.toDashboard === true) {
-      return <Redirect to = {
+      return <Redirect to={
         {
           pathname: '/dashboard',
           state: {
-            id: this.state.customerId
+            customerId: this.state.customerId
           }
-        }
-      }
-      />;
+        }} />;
+    } else {
+      return (
+        <div className="App">
+          <div className="title">
+            <Typography component="h1" variant="h3" gutterBottom>
+              RoboAdvisor
+            </Typography>
+            <Typography component="h1" variant="h4" gutterBottom>
+              Portfolio Rebalancer Service
+            </Typography>
+          </div>
+          <div className="login">
+            <div>
+              <TextField
+                placeholder="Enter Customer ID"
+                label="Customer ID"
+                fullWidth={true}
+                margin="normal"
+                onChange={this.handleCustomerIdChange}
+                variant="outlined"
+              />
+            </div>
+            <div>
+              <Button
+                className="login_button"
+                variant="contained"
+                onClick={this.handleLogin}
+                color="secondary">
+                Login
+            </Button>
+            </div>
+          </div>
+        </div>
+      );
     }
-
-    return (
-      <div className="App">
-        <header className="header">
-            <Paper className="paper">
-              <div style={{ padding: 20}}>
-                <Grid container spacing={24}>
-                  <Grid item xs={12}>
-                    <Typography component="h1" variant="title" gutterBottom>
-                      HSBC RoboAdvisor Portfolio Rebalancer
-                    </Typography>
-                  </Grid>
-                </Grid>
-              </div>
-              <div style={{ paddingTop: 160}}>
-                <Grid container spacing={24}>
-                  <Grid item xs={12}>
-                      <TextField
-                      placeholder="Enter Customer ID"
-                      value={this.state.idValue}
-                      id="outlined-dense"
-                      label="Customer ID"
-                      className="dense"
-                      margin="dense"
-                      onChange={this.handleCustomerIdChange}
-                      variant="outlined"
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Button variant="contained" color="primary"
-                      onClick={this.handleLogin}
-                      className="button">
-                        Login
-                    </Button>
-                  </Grid>
-                </Grid>
-              </div>
-          </Paper>
-        </header>
-      </div>
-    );
   }
 }
 
