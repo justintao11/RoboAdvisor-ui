@@ -11,7 +11,6 @@ class Login extends React.Component {
     this.state = {
       toDashboard: false,
       customerId: "",
-      isValidCustomer: false
     }
     this.handleLogin = this.handleLogin.bind(this);
     this.handleCustomerIdChange = this.handleCustomerIdChange.bind(this);
@@ -40,7 +39,7 @@ class Login extends React.Component {
         }} />;
     } else {
       return (
-        <div className="App">
+        <div className="loginContainer">
           <div className="title">
             <Typography component="h1" variant="h3" gutterBottom>
               RoboAdvisor

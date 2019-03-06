@@ -1,0 +1,13 @@
+image: lakoo/node-gcloud-docker
+
+stages:
+  - deploy
+
+production:
+  stage: deploy
+  script:
+    - echo $DEPLOY_KEY_FILE_PRODUCTION > /tmp/$CI_PIPELINE_ID.json
+    - gcloud auth activate-service-account --key-file /tmp/$CI_PIPELINE_ID.json
+    - gcloud app deploy app.yml
+  only:
+    - master
