@@ -7,7 +7,7 @@ production:
   stage: deploy
   script:
     - echo $DEPLOY_KEY_FILE_PRODUCTION > /tmp/$CI_PIPELINE_ID.json
-    - gcloud auth activate-service-account --key-file /tmp/$CI_PIPELINE_ID.json\
+    - gcloud auth activate-service-account --key-file /tmp/$CI_PIPELINE_ID.json
     - gcloud config set project hsbc-roboadvisor
     - gcloud app deploy app.yml
   only:
