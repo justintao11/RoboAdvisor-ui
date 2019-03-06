@@ -7,7 +7,7 @@ handlers:
     static_files: build/index.html
     upload: build/index.html
   - url: /static
-     static_dir: build/static
+    static_dir: build/static
   - url: /manifest.json
     static_files: build/manifest.json
     upload: build/manifest.json
