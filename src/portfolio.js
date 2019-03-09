@@ -13,71 +13,7 @@ import { Redirect } from 'react-router-dom';
 import {
   dashboardEmailStatisticsChart,
 } from "./variables/charts.jsx";
-
-const data = {
-  labels: [
-    'Red',
-    'Green',
-    'Yellow'
-  ],
-  datasets: [{
-    data: [300, 50, 100],
-    backgroundColor: [
-      '#FF6384',
-      '#e0e0e0',
-      '#e0e0e0'
-    ],
-    hoverBackgroundColor: [
-      '#FF6384',
-      '#e0e0e0',
-      '#e0e0e0'
-    ]
-  }]
-};
-
-const data1 = {
-  labels: [
-    'Red',
-    'Green',
-    'Yellow'
-  ],
-  datasets: [{
-    data: [300, 50, 100],
-    backgroundColor: [
-      '#e0e0e0',
-      '#FF6384',
-      '#e0e0e0'
-    ],
-    hoverBackgroundColor: [
-      '#e0e0e0',
-      '#FF6384',
-      '#e0e0e0'
-    ]
-  }]
-};
-
-const data2 = {
-  labels: [
-    'Red',
-    'Green',
-    'Yellow'
-  ],
-  datasets: [{
-    data: [300, 50, 100],
-    backgroundColor: [
-      '#e0e0e0',
-      '#e0e0e0',
-      '#FF6384'
-    ],
-    hoverBackgroundColor: [
-      '#e0e0e0',
-      '#e0e0e0',
-      '#FF6384'
-    ]
-  }]
-};
-
-// const request = require('request');
+const request = require('request');
 
 class Portfolio extends React.Component {
   constructor(props) {
@@ -88,6 +24,8 @@ class Portfolio extends React.Component {
       recommandOn: false,
       target1: 20,
       fundb: 0,
+      funds: [],
+      total: 1,
       toDashboard: false,
       allowedDeviation: 5,
       customerId: props.location.state.customerId,
@@ -99,6 +37,7 @@ class Portfolio extends React.Component {
   }
 
   componentDidMount() {
+    this.getFunds(this.state.customerId);
   }
 
   changeAllowedAllocation = name => e => {
@@ -145,6 +84,96 @@ class Portfolio extends React.Component {
     })
   }
 
+  getFunds(custId) {
+    let options = {
+      url: "https://fund-rebalancer-dot-hsbc-roboadvisor.appspot.com/roboadvisor/fundsystem/portfolios",
+      method: 'GET',
+      headers: {
+        'x-custid': custId
+      }
+    }
+
+    request(options, (error, response, body) => {
+      if (!error && response.statusCode === 200) {
+        let info = JSON.parse(body);
+        console.log(info);
+        let funds;
+        for (let i = 0; i<info.length; i++) {
+          if(info[i].id === this.state.selectedPortfolio.id) {
+            funds = info[i].holdings;
+          }
+        }
+        let total = 0;
+        for(let i =0; i<funds.length; i++) {
+          total += funds[i].balance.amount;
+        }
+        this.setState({
+          funds: funds,
+          total: total
+        });
+      } else {
+        console.log("getPortfolioList res code: " + response.statusCode)
+        console.log(error);
+      }
+    });
+  }
+
+  createFund(index) {
+    let portion = Math.round(this.state.funds[index].balance.amount * 100 / this.state.total);
+    return (
+        <Paper className="fundCard">
+          <div className="fund">
+            <Typography variant="display2" className="title">Fund ID: {this.state.funds[index].fundId}</Typography>
+            {this.state.setTargetOn ? (
+              <div className="rellocationRow">
+                <Typography variant="h6" className="title">Target %: </Typography>
+                <TextField
+                  id="outlined-number"
+                  label="Number"
+                  value={this.state.target1}
+                  onChange={this.handleChange('target1')}
+                  type="number"
+                  className="textField"
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  margin="normal"
+                  variant="outlined"
+                />
+              </div>
+            ) : (
+                <Typography variant="h6" className="title">Target %: {this.state.target1}</Typography>
+              )}
+            <Typography variant="h6" className="title">Current %: {portion}</Typography>
+          </div>
+        </Paper>)
+  }
+
+  createChart(index) {
+    let portion = Math.round(this.state.funds[index].balance.amount * 100 / this.state.total);
+    let graph = {
+      datasets: [{
+        data: [],
+        backgroundColor: []
+      }]
+    };
+    let funds = this.state.funds;
+    for(let i=0; i<funds.length; i++) {
+      graph.datasets[0].data.push(Math.round(this.state.funds[i].balance.amount * 100 / this.state.total));
+      let color = (i == index) ? '#FF6384' : '#e0e0e0';
+      graph.datasets[0].backgroundColor.push(color);
+    }
+
+    return (
+        <Doughnut
+          data={graph}
+          options={dashboardEmailStatisticsChart.options}
+        />
+      )
+  }
+
+
+
 
   render() {
     if (this.state.toDashboard === true) {
@@ -156,6 +185,7 @@ class Portfolio extends React.Component {
       }}
       />;
     }
+    let that = this;
 
     return (
       <div className="dashboardContainer">
@@ -200,168 +230,25 @@ class Portfolio extends React.Component {
             ):(
               <Typography variant="h6" className="title">Allowed Deviation: {this.state.allowedDeviation}</Typography>
             )}
-            </Grid>              
-            <Grid item xs={this.state.recommandOn ? 3 : 9}>
-              <Paper className="fundCard">
-                <div className="fund">
-                  <Typography variant="display2" className="title">Fund A</Typography>
-                  {this.state.setTargetOn ? (
-                    <div className="rellocationRow">
-                      <Typography variant="h6" className="title">Target %: </Typography>
-                      <TextField
-                        id="outlined-number"
-                        label="Number"
-                        value={this.state.target1}
-                        onChange={this.handleChange('target1')}
-                        type="number"
-                        className="textField"
-                        InputLabelProps={{
-                          shrink: true,
-                        }}
-                        margin="normal"
-                        variant="outlined"
-                      />
-                    </div>
-                  ) : (
-                      <Typography variant="h6" className="title">Target %: {this.state.target1}</Typography>
-                    )}
+            </Grid>      
+            {this.state.funds.map(function(object, i){
+                return (
+                  <Grid item xs={12}>
+                    <Grid container spacing={24}>
+                    <Grid item xs={that.state.recommandOn ? 3 : 9}>
+                      {that.createFund(i)}
+                    </Grid>
+                    <Grid item xs={3}>
+                      {that.createChart(i)}
+                    </Grid>
+                    </Grid>
+                  </Grid>
+                );
+            })}    
+            
+            
 
-                  <Typography variant="h6" className="title">Current %: {20}</Typography>
-                </div>
-              </Paper>
-            </Grid>
-            <Grid item xs={3}>
-              <Doughnut
-                data={data}
-                options={dashboardEmailStatisticsChart.options}
-              />
-            </Grid>
-            {this.state.recommandOn && (
-              <Grid item xs={6}>
-                <Paper className="fundCard">
-                  <Typography variant="h6" className="title">Recommendation: fund{"B"} :</Typography>
-                  <div className="rellocationRow">
-                    <Button variant="contained" color="default" className="TOPBUTTON">
-                      Sell
-                </Button>
-                    <Button variant="contained" color="secondary" className="TOPBUTTON">
-                      Buy
-                </Button>
-                    <TextField
-                      id="outlined-number"
-                      label="Number"
-                      value={this.state.fundb}
-                      onChange={this.handleChange('bundb')}
-                      type="number"
-                      className="textField"
-                      InputLabelProps={{
-                        shrink: true,
-                      }}
-                      margin="normal"
-                      variant="outlined"
-                    />
-                    <Typography> UNITS</Typography>
-                  </div>
-                </Paper>
-              </Grid>
-            )}
-            <Grid item xs={this.state.recommandOn ? 3 : 9}>
-              <Paper className="fundCard">
-                <div className="fund">
-                  <Typography variant="display2" className="title">Fund B</Typography>
-                  {this.state.setTargetOn ? (
-                    <div className="rellocationRow">
-                      <Typography variant="h6" className="title">Target %: </Typography>
-                      <TextField
-                        id="outlined-number"
-                        label="Number"
-                        value={this.state.target1}
-                        onChange={this.handleChange('target1')}
-                        type="number"
-                        className="textField"
-                        InputLabelProps={{
-                          shrink: true,
-                        }}
-                        margin="normal"
-                        variant="outlined"
-                      />
-                    </div>
-                  ) : (
-                      <Typography variant="h6" className="title">Target %: {20}</Typography>
-                    )}
-                  <Typography variant="h6" className="title">Current %: {20}</Typography>
-                </div>
-              </Paper>
-            </Grid>
-            <Grid item xs={3} className="doughnutChart">
-              <Doughnut
-                data={data1}
-                options={dashboardEmailStatisticsChart.options}
-              />
-            </Grid>
-            {this.state.recommandOn && (
-              <Grid item xs={6}>
-                <Paper className="fundCard">
-                  <Typography variant="h6" className="title">Recommendation: fund{"B"} :</Typography>
-                  <div className="rellocationRow">
-                    <Button variant="contained" color="default" className="TOPBUTTON">
-                      Sell
-                </Button>
-                    <Button variant="contained" color="secondary" className="TOPBUTTON">
-                      Buy
-                </Button>
-                    <TextField
-                      id="outlined-number"
-                      label="Number"
-                      value={this.state.fundb}
-                      onChange={this.handleChange('bundb')}
-                      type="number"
-                      className="textField"
-                      InputLabelProps={{
-                        shrink: true,
-                      }}
-                      margin="normal"
-                      variant="outlined"
-                    />
-                    <Typography> UNITS</Typography>
-                  </div>
-                </Paper>
-              </Grid>
-            )}
-            <Grid item xs={this.state.recommandOn ? 3 : 9}>
-              <Paper className="fundCard">
-                <div className="fund">
-                  <Typography variant="display2" className="title">Fund C</Typography>
-                  {this.state.setTargetOn ? (
-                    <div className="rellocationRow">
-                      <Typography variant="h6" className="title">Target %: </Typography>
-                      <TextField
-                        id="outlined-number"
-                        label="Number"
-                        value={this.state.target1}
-                        onChange={this.handleChange('target1')}
-                        type="number"
-                        className="textField"
-                        InputLabelProps={{
-                          shrink: true,
-                        }}
-                        margin="normal"
-                        variant="outlined"
-                      />
-                    </div>
-                  ) : (
-                      <Typography variant="h6" className="title">Target %: {20}</Typography>
-                    )}
-                  <Typography variant="h6" className="title">Current %: {20}</Typography>
-                </div>
-              </Paper>
-            </Grid>
-            <Grid item xs={3}>
-              <Doughnut
-                data={data2}
-                options={dashboardEmailStatisticsChart.options}
-              />
-            </Grid>
+
             {this.state.recommandOn && (
               <Grid item xs={6}>
                 <Paper className="fundCard">
