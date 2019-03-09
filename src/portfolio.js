@@ -34,7 +34,7 @@ class Portfolio extends React.Component {
     }
 
     this.handleSetTargetClick = this.handleSetTargetClick.bind(this);
-    this.handleSetTargetClick = this.getRebalance(this.state.selectedPortfolio.id, this.state.customerId);
+    this.getRebalance = this.getRebalance(this.state.selectedPortfolio.id, this.state.customerId);
   }
 
   componentDidMount() {
