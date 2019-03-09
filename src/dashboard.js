@@ -336,7 +336,7 @@ class Dashboard extends React.Component {
             <Grid item xs={12}>
               <TCard className="UserInfo">
                 <CardContent>
-                  < Typography variant="title" className="subheading" >
+                  <Typography variant="title" className="subheading">
                     My Portfolios
                   </Typography>
                   <PortfolioList

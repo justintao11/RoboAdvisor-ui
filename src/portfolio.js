@@ -1,44 +1,18 @@
 import React from "react";
-// import {
-//   Card as TCard,
-//   CardHeader,
-//   CardBody,
-//   CardFooter,
-//   CardTitle,
-//   Row,
-//   Col
-// } from "reactstrap";
-// react plugin used to create charts
 import {
   Doughnut
 } from "react-chartjs-2";
-// import {
-//   Line,
-//   Pie,
-//   Doughnut
-// } from "react-chartjs-2";
-
-// function that returns a color based on an interval of numbers
 import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
 import './portfolio.css';
-// import Stats from "./Stats.jsx";
 import { Redirect } from 'react-router-dom';
 
 import {
-  // dashboard24HoursPerformanceChart,
   dashboardEmailStatisticsChart,
-  // dashboardNASDAQChart
 } from "./variables/charts.jsx";
-
-// var myDoughnutChart = new Chart(ctx, {
-//     type: 'doughnut',
-//     data: data,
-//     options: options
-// });
 
 const data = {
   labels: [
