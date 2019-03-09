@@ -147,6 +147,16 @@ class Portfolio extends React.Component {
       <div className="dashboardContainer">
         <div className="root">
           <Grid container spacing={24}>
+            <Grid item xs={6}>
+              <Typography variant="h5" className="Portfolio Title">
+                Portfolio ID: {this.state.selectedPortfolio.id}
+              </Typography>
+            </Grid>
+            <Grid item xs={6}>
+              <Typography variant="h5" className="Customer Title">
+                Customer ID: {this.state.customerId}
+              </Typography>
+            </Grid>
             <Grid item xs={12}>
               <Button variant="contained" onClick={this.handleBack} color="secondary" className="TOPBUTTON">
                 Back
@@ -154,11 +164,6 @@ class Portfolio extends React.Component {
               <Button variant="contained" onClick={this.handleReallocationClick} color="default" className="TOPBUTTON">
                 Reallocate
             </Button>
-            </Grid>
-            <Grid item xs={12}>
-              <Typography variant="h5" className="title">
-                Portfolio ID: {this.state.selectedPortfolio.id}
-              </Typography>
             </Grid>
             <Grid item xs={this.state.recommandOn ? 3 : 9}>
               <Paper className="fundCard">
