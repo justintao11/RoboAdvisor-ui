@@ -47,8 +47,8 @@ class Portfolio extends React.Component {
       if(!error&&response.statusCode===200){
         console.log(body);
       }else{
-        console.log("error");
-        console.log(response);
+        console.log("error!!!");
+        console.log("getRebalance res code: " + response.statusCode);
         console.log(customerId);
         console.log(selectedPortfolio);
       }
