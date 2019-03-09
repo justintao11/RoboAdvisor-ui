@@ -7,8 +7,14 @@ import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
+import Snackbar from '@material-ui/core/Snackbar';
+import SnackbarContent from '@material-ui/core/SnackbarContent';
+import WarningIcon from '@material-ui/icons/Warning';
 import './portfolio.css';
 import { Redirect } from 'react-router-dom';
+import IconButton from '@material-ui/core/IconButton';
+import CloseIcon from '@material-ui/icons/Close';
+import ErrorIcon from '@material-ui/icons/Error';
 
 import {
   dashboardEmailStatisticsChart,
@@ -22,19 +28,19 @@ class Portfolio extends React.Component {
       selected: null,
       setTargetOn: false,
       recommandOn: false,
-      target1: 20,
-      fundb: 0,
       funds: [],
+      targets: [25, 25, 25],
       total: 1,
+      warningOpen: false,
       toDashboard: false,
       allowedDeviation: 5,
+      errorMessage: "Bla bla",
       customerId: props.location.state.customerId,
       selectedPortfolioPreference: props.location.state.selectedPortfolioPreference,
       selectedPortfolio: props.location.state.selectedPortfolio
     }
 
     this.handleSetTargetClick = this.handleSetTargetClick.bind(this);
-    this.handleSetTargetClick = this.getRebalance(this.state.selectedPortfolio.id, this.state.customerId);
   }
 
   componentDidMount() {
@@ -57,13 +63,15 @@ class Portfolio extends React.Component {
 
   changeAllowedAllocation = name => e => {
     this.setState({
-      allowedDeviation: e.target.value,
+      allowedDeviation: Number(e.target.value),
     });
   }
 
-  handleChange = name => event => {
+  handleChange = index => event => {
+    let targets = this.state.targets;
+    targets[index] = Number(event.target.value);
     this.setState({
-      [name]: event.target.value,
+      targets: targets
     });
   };
 
@@ -87,9 +95,25 @@ class Portfolio extends React.Component {
   }
 
   setTarget = (e) => {
+    let sum = this.state.targets.reduce((partial_sum, a) => partial_sum + a);
+    if(sum !== 100) {
+      this.setState({
+        errorMessage: "Target is not add up to 100",
+        warningOpen: true
+      })
+    } else {
+      this.setState({
+        warningOpen: false,
+        setTargetOn: false,
+        recommandOn: false
+      })
+    }
+    
+  }
+
+  handleAlertClose = (e) => {
     this.setState({
-      setTargetOn: false,
-      recommandOn: false
+      warningOpen: false
     })
   }
 
@@ -133,20 +157,22 @@ class Portfolio extends React.Component {
     });
   }
 
+
+
   createFund(index) {
     let portion = Math.round(this.state.funds[index].balance.amount * 100 / this.state.total);
     return (
-        <Paper className="fundCard">
+        <Paper key={index} className="fundCard">
           <div className="fund">
             <Typography variant="display2" className="title">Fund ID: {this.state.funds[index].fundId}</Typography>
             {this.state.setTargetOn ? (
               <div className="rellocationRow">
-                <Typography variant="h6" className="title">Target %: </Typography>
+                <Typography variant="h6" className="title">Target %:</Typography>
                 <TextField
                   id="outlined-number"
                   label="Number"
-                  value={this.state.target1}
-                  onChange={this.handleChange('target1')}
+                  value={this.state.targets[index]}
+                  onChange={this.handleChange(index)}
                   type="number"
                   className="textField"
                   InputLabelProps={{
@@ -157,7 +183,7 @@ class Portfolio extends React.Component {
                 />
               </div>
             ) : (
-                <Typography variant="h6" className="title">Target %: {this.state.target1}</Typography>
+                <Typography variant="h6" className="title">Target %: {this.state.targets[index]}</Typography>
               )}
             <Typography variant="h6" className="title">Current %: {portion}</Typography>
           </div>
@@ -181,6 +207,7 @@ class Portfolio extends React.Component {
 
     return (
         <Doughnut
+          key={index}
           data={graph}
           options={dashboardEmailStatisticsChart.options}
         />
@@ -260,10 +287,6 @@ class Portfolio extends React.Component {
                   </Grid>
                 );
             })}    
-            
-            
-
-
             {this.state.recommandOn && (
               <Grid item xs={6}>
                 <Paper className="fundCard">
@@ -305,16 +328,39 @@ class Portfolio extends React.Component {
                 <Grid item xs={6}>
                   <Button onClick={this.setTarget} fullWidth={true} variant="contained" color="secondary" className="TOPBUTTON">
                     MODIFY
-              </Button>
+                  </Button>
                 </Grid>
                 <Grid item xs={6}>
                   <Button onClick={this.executeRecommend} fullWidth={true} variant="contained" color="secondary" className="TOPBUTTON">
                     EXECUTE
-              </Button>
+                  </Button>
                 </Grid>
               </Grid>
             )}
-
+            <Snackbar
+              className="Snackbar"
+              open={this.state.warningOpen}
+              autoHideDuration={3000}
+              onClose={this.handleAlertClose}>
+              <SnackbarContent
+                className="SnackbarContent"
+                aria-describedby="client-snackbar"
+                message={
+                  <span id="client-snackbar" className="message">
+                    <ErrorIcon className="icon" />
+                    {this.state.errorMessage}
+                  </span>
+                }
+                action={[
+                  <IconButton
+                    className="close"
+                    onClick={this.handleAlertClose}
+                  >
+                    <CloseIcon className="closeIcon" />
+                  </IconButton>
+                ]}
+              />
+            </Snackbar>
           </Grid>
         </div>
       </div>
