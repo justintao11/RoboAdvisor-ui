@@ -181,6 +181,9 @@ class Portfolio extends React.Component {
               <Button variant="contained" onClick={this.handleReallocationClick} color="default" className="TOPBUTTON">
                 Rebalance
               </Button>
+            </Grid>            
+            <Grid item xs={12}>
+            {this.state.setTargetOn ? (
               <TextField
                 id="outlined-number"
                 label="Allowed Deviation"
@@ -194,7 +197,10 @@ class Portfolio extends React.Component {
                 margin="normal"
                 variant="outlined"
               />
-            </Grid>
+            ):(
+              <Typography variant="h6" className="title">Allowed Deviation: {this.state.allowedDeviation}</Typography>
+            )}
+            </Grid>              
             <Grid item xs={this.state.recommandOn ? 3 : 9}>
               <Paper className="fundCard">
                 <div className="fund">
