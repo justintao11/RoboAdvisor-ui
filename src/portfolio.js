@@ -34,10 +34,25 @@ class Portfolio extends React.Component {
     }
 
     this.handleSetTargetClick = this.handleSetTargetClick.bind(this);
+    this.handleSetTargetClick = this.getRebalance(this.state.selectedPortfolio.id, this.state.customerId);
   }
 
   componentDidMount() {
     this.getFunds(this.state.customerId);
+  }
+
+  getRebalance = (selectedPortfolio, customerId) =>{
+    request.post({url: 'http://fund-rebalancer.hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/'+selectedPortfolio+'/rebalance', 
+                  headers: {'x-custid':customerId}}, function(error, response, body){
+      if(!error&&response.statusCode===200){
+        console.log(body);
+      }else{
+        console.log("error");
+        console.log(response);
+        console.log(customerId);
+        console.log(selectedPortfolio);
+      }
+    });
   }
 
   changeAllowedAllocation = name => e => {
