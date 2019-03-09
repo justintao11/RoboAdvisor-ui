@@ -8,12 +8,44 @@
 }
 
 .fundCard {
-	height: 200px;
+	height: 120px;
+
 }
 
-.rellocationRow {
+.fundIDString {
+	padding-top: 20px;
+
+}
+
+.fundColumn {
+	display: flex;
+	flex-direction: row;
+	text-align: left;
+	align-items: left;
+}
+
+.percentColumn {
 	display: flex;
 	flex-direction: row;
 	text-align: center;
 	align-items: center;
 }
+
+/*.closeIcon {
+  fontSize: 20;
+}*/
+/*.Snackbar {
+	width: 120px;
+	background-color: "#FF0266";
+}
+.SnackbarContent {
+	background-color: "#FF0266";
+}
+.closeIcon {
+  opacity: 0.9;
+  marginRight: 20;
+}
+.message {
+  display: 'flex';
+  alignItems: 'center';
+}*/

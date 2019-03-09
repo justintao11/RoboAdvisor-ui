@@ -7,13 +7,25 @@ import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
+import Snackbar from '@material-ui/core/Snackbar';
+import SnackbarContent from '@material-ui/core/SnackbarContent';
+import WarningIcon from '@material-ui/icons/Warning';
 import './portfolio.css';
 import { Redirect } from 'react-router-dom';
+import IconButton from '@material-ui/core/IconButton';
+import CloseIcon from '@material-ui/icons/Close';
+import ErrorIcon from '@material-ui/icons/Error';
 
 import {
   dashboardEmailStatisticsChart,
 } from "./variables/charts.jsx";
 const request = require('request');
+
+const styles = theme => ({
+  multilineColor:{
+      color:'red'
+  }
+});
 
 class Portfolio extends React.Component {
   constructor(props) {
@@ -22,12 +34,13 @@ class Portfolio extends React.Component {
       selected: null,
       setTargetOn: false,
       recommandOn: false,
-      target1: 20,
-      fundb: 0,
       funds: [],
+      targets: [25, 25, 25],
       total: 1,
+      warningOpen: false,
       toDashboard: false,
       allowedDeviation: 5,
+      errorMessage: "Bla bla",
       customerId: props.location.state.customerId,
       selectedPortfolioPreference: props.location.state.selectedPortfolioPreference,
       selectedPortfolio: props.location.state.selectedPortfolio
@@ -57,13 +70,15 @@ class Portfolio extends React.Component {
 
   changeAllowedAllocation = name => e => {
     this.setState({
-      allowedDeviation: e.target.value,
+      allowedDeviation: Number(e.target.value),
     });
   }
 
-  handleChange = name => event => {
+  handleChange = index => event => {
+    let targets = this.state.targets;
+    targets[index] = Number(event.target.value);
     this.setState({
-      [name]: event.target.value,
+      targets: targets
     });
   };
 
@@ -87,9 +102,26 @@ class Portfolio extends React.Component {
   }
 
   setTarget = (e) => {
+    let sum = this.state.targets.reduce((partial_sum, a) => partial_sum + a);
+    console.log(sum);
+    if(sum !== 100) {
+      this.setState({
+        errorMessage: "Target is not add up to 100",
+        warningOpen: true
+      })
+    } else {
+      this.setState({
+        warningOpen: false,
+        setTargetOn: false,
+        recommandOn: false
+      })
+    }
+    
+  }
+
+  handleAlertClose = (e) => {
     this.setState({
-      setTargetOn: false,
-      recommandOn: false
+      warningOpen: false
     })
   }
 
@@ -133,20 +165,23 @@ class Portfolio extends React.Component {
     });
   }
 
+
+
   createFund(index) {
     let portion = Math.round(this.state.funds[index].balance.amount * 100 / this.state.total);
     return (
+    /*
         <Paper className="fundCard">
           <div className="fund">
             <Typography variant="display2" className="title">Fund ID: {this.state.funds[index].fundId}</Typography>
             {this.state.setTargetOn ? (
               <div className="rellocationRow">
-                <Typography variant="h6" className="title">Target %: </Typography>
+                <Typography variant="h6" className="title">Target %:</Typography>
                 <TextField
                   id="outlined-number"
                   label="Number"
-                  value={this.state.target1}
-                  onChange={this.handleChange('target1')}
+                  value={this.state.targets[index]}
+                  onChange={this.handleChange(index)}
                   type="number"
                   className="textField"
                   InputLabelProps={{
@@ -157,12 +192,88 @@ class Portfolio extends React.Component {
                 />
               </div>
             ) : (
-                <Typography variant="h6" className="title">Target %: {this.state.target1}</Typography>
+                <Typography variant="h6" className="title">Target %: {this.state.targets[index]}</Typography>
               )}
             <Typography variant="h6" className="title">Current %: {portion}</Typography>
           </div>
         </Paper>)
-  }
+  */
+
+      <Paper className="fundCard"> 
+        <Grid container direction="row">
+          <Grid item xs = {4} container direction="column" className="fundColumn">
+            <Grid item>
+              <Typography variant="display1">Fund ID</Typography>
+            </Grid>
+            <Grid item>
+              <Typography className="fundIDString" variant="h4">{this.state.funds[index].fundId}</Typography>
+            </Grid>
+          </Grid>          
+      
+        <Grid item xs = {4} container direction="column" className="percentColumn">
+          <Grid item>
+            <Typography variant="display1">Current</Typography>
+          </Grid>
+
+          <Grid item>
+            <TextField
+            disabled
+            id="filled-disabled"
+            defaultValue={portion}
+            className="textField"
+            margin="normal"
+            variant="outlined"
+            style = {{width: 60}}                     
+            />
+          </Grid>
+        </Grid>
+      
+      
+        {this.state.setTargetOn ? (
+          <Grid item xs = {4} container direction="column" className="percentColumn">
+          <Grid item>
+            <Typography variant="display1" >Target </Typography>
+          </Grid>
+            <TextField
+              id="outlined-number"
+              label="%"
+              value={this.state.targets[index]}
+              onChange={this.handleChange(index)}
+              type="number"
+              className="textField"
+              InputLabelProps={{
+              shrink: true,
+              }}
+              margin="normal"
+              variant="outlined"
+              style = {{width: 60}}
+                          
+            />                      
+          </Grid> 
+        ) : (
+          <Grid item xs = {4} container direction="column" className="percentColumn">
+            <Grid item>
+            <Typography variant="display1"> Target </Typography>
+            </Grid>
+            <Grid item>
+            <TextField
+              disabled
+              id="filled-disabled"
+              defaultValue={this.state.targets[index]}
+              className="textField"
+              margin="normal"
+              variant="outlined"
+              style = {{width: 60}}
+                                   
+            />
+            </Grid>
+          </Grid>
+          )}
+          
+      </Grid>
+    </Paper>
+  
+    )}
 
   createChart(index) {
     let portion = Math.round(this.state.funds[index].balance.amount * 100 / this.state.total);
@@ -181,10 +292,74 @@ class Portfolio extends React.Component {
 
     return (
         <Doughnut
+          key={index}
           data={graph}
           options={dashboardEmailStatisticsChart.options}
         />
       )
+  }
+
+  createRecommand(index) {
+    return (
+      <Grid item xs={6}>
+        <Paper className="fundCard">
+          <Typography variant="h6" className="title">Recommendation: fund{"B"} :</Typography>
+          <div className="rellocationRow">
+            <Button variant="contained" color="default" className="TOPBUTTON">
+              Sell
+        </Button>
+            <Button variant="contained" color="secondary" className="TOPBUTTON">
+              Buy
+        </Button>
+            <TextField
+              id="outlined-number"
+              label="Number"
+              value={this.state.fundb}
+              onChange={this.handleChange('bundb')}
+              type="number"
+              className="textField"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              margin="normal"
+              variant="outlined"
+            />
+            <Typography> UNITS</Typography>
+          </div>
+        </Paper>
+      </Grid>
+    )
+  }
+
+  createMiniFund(index) {
+    let portion = Math.round(this.state.funds[index].balance.amount * 100 / this.state.total);
+    return (
+        <Paper key={index} className="fundCard">
+          <div className="fund">
+            <Typography variant="display2" className="title">Fund ID: {this.state.funds[index].fundId}</Typography>
+            {this.state.setTargetOn ? (
+              <div className="rellocationRow">
+                <Typography variant="h6" className="title">Target %:</Typography>
+                <TextField
+                  id="outlined-number"
+                  label="Number"
+                  value={this.state.targets[index]}
+                  onChange={this.handleChange(index)}
+                  type="number"
+                  className="textField"
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  margin="normal"
+                  variant="outlined"
+                />
+              </div>
+            ) : (
+                <Typography variant="h6" className="title">Target %: {this.state.targets[index]}</Typography>
+              )}
+            <Typography variant="h6" className="title">Current %: {portion}</Typography>
+          </div>
+        </Paper>)
   }
 
 
@@ -251,48 +426,16 @@ class Portfolio extends React.Component {
                   <Grid item xs={12}>
                     <Grid container spacing={24}>
                     <Grid item xs={that.state.recommandOn ? 3 : 9}>
-                      {that.createFund(i)}
+                      {that.state.recommandOn? that.createMiniFund(i) : that.createFund(i)}
                     </Grid>
+                    {that.state.recommandOn && that.createRecommand(i)}
                     <Grid item xs={3}>
                       {that.createChart(i)}
                     </Grid>
                     </Grid>
                   </Grid>
                 );
-            })}    
-            
-            
-
-
-            {this.state.recommandOn && (
-              <Grid item xs={6}>
-                <Paper className="fundCard">
-                  <Typography variant="h6" className="title">Recommendation: fund{"B"} :</Typography>
-                  <div className="rellocationRow">
-                    <Button variant="contained" color="default" className="TOPBUTTON">
-                      Sell
-                </Button>
-                    <Button variant="contained" color="secondary" className="TOPBUTTON">
-                      Buy
-                </Button>
-                    <TextField
-                      id="outlined-number"
-                      label="Number"
-                      value={this.state.fundb}
-                      onChange={this.handleChange('bundb')}
-                      type="number"
-                      className="textField"
-                      InputLabelProps={{
-                        shrink: true,
-                      }}
-                      margin="normal"
-                      variant="outlined"
-                    />
-                    <Typography> UNITS</Typography>
-                  </div>
-                </Paper>
-              </Grid>
-            )}
+            })}
             {this.state.setTargetOn && (
               <Grid item xs={12}>
                 <Button onClick={this.setTarget} fullWidth={true} variant="contained" color="secondary" className="TOPBUTTON">
@@ -305,16 +448,39 @@ class Portfolio extends React.Component {
                 <Grid item xs={6}>
                   <Button onClick={this.setTarget} fullWidth={true} variant="contained" color="secondary" className="TOPBUTTON">
                     MODIFY
-              </Button>
+                  </Button>
                 </Grid>
                 <Grid item xs={6}>
                   <Button onClick={this.executeRecommend} fullWidth={true} variant="contained" color="secondary" className="TOPBUTTON">
                     EXECUTE
-              </Button>
+                  </Button>
                 </Grid>
               </Grid>
             )}
-
+            <Snackbar
+              className="Snackbar"
+              open={this.state.warningOpen}
+              autoHideDuration={3000}
+              onClose={this.handleAlertClose}>
+              <SnackbarContent
+                className="SnackbarContent"
+                aria-describedby="client-snackbar"
+                message={
+                  <span id="client-snackbar" className="message">
+                    <ErrorIcon className="icon" />
+                    {this.state.errorMessage}
+                  </span>
+                }
+                action={[
+                  <IconButton
+                    className="close"
+                    onClick={this.handleAlertClose}
+                  >
+                    <CloseIcon className="closeIcon" />
+                  </IconButton>
+                ]}
+              />
+            </Snackbar>
           </Grid>
         </div>
       </div>
