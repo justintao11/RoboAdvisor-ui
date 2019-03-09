@@ -298,6 +298,69 @@ class Portfolio extends React.Component {
       )
   }
 
+  createRecommand(index) {
+    return (
+      <Grid item xs={6}>
+        <Paper className="fundCard">
+          <Typography variant="h6" className="title">Recommendation: fund{"B"} :</Typography>
+          <div className="rellocationRow">
+            <Button variant="contained" color="default" className="TOPBUTTON">
+              Sell
+        </Button>
+            <Button variant="contained" color="secondary" className="TOPBUTTON">
+              Buy
+        </Button>
+            <TextField
+              id="outlined-number"
+              label="Number"
+              value={this.state.fundb}
+              onChange={this.handleChange('bundb')}
+              type="number"
+              className="textField"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              margin="normal"
+              variant="outlined"
+            />
+            <Typography> UNITS</Typography>
+          </div>
+        </Paper>
+      </Grid>
+    )
+  }
+
+  createMiniFund(index) {
+    let portion = Math.round(this.state.funds[index].balance.amount * 100 / this.state.total);
+    return (
+        <Paper key={index} className="fundCard">
+          <div className="fund">
+            <Typography variant="display2" className="title">Fund ID: {this.state.funds[index].fundId}</Typography>
+            {this.state.setTargetOn ? (
+              <div className="rellocationRow">
+                <Typography variant="h6" className="title">Target %:</Typography>
+                <TextField
+                  id="outlined-number"
+                  label="Number"
+                  value={this.state.targets[index]}
+                  onChange={this.handleChange(index)}
+                  type="number"
+                  className="textField"
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  margin="normal"
+                  variant="outlined"
+                />
+              </div>
+            ) : (
+                <Typography variant="h6" className="title">Target %: {this.state.targets[index]}</Typography>
+              )}
+            <Typography variant="h6" className="title">Current %: {portion}</Typography>
+          </div>
+        </Paper>)
+  }
+
 
 
 
@@ -362,8 +425,9 @@ class Portfolio extends React.Component {
                   <Grid item xs={12}>
                     <Grid container spacing={24}>
                     <Grid item xs={that.state.recommandOn ? 3 : 9}>
-                      {that.createFund(i)}
+                      {that.state.recommandOn? that.createMiniFund(i) : that.createFund(i)}
                     </Grid>
+                    {that.state.recommandOn && that.createRecommand(i)}
                     <Grid item xs={3}>
                       {that.createChart(i)}
                     </Grid>
