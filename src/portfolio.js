@@ -103,6 +103,7 @@ class Portfolio extends React.Component {
 
   setTarget = (e) => {
     let sum = this.state.targets.reduce((partial_sum, a) => partial_sum + a);
+    console.log(sum);
     if(sum !== 100) {
       this.setState({
         errorMessage: "Target is not add up to 100",
@@ -236,8 +237,8 @@ class Portfolio extends React.Component {
             <TextField
               id="outlined-number"
               label="%"
-              value={this.state.target1}
-              onChange={this.handleChange('target1')}
+              value={this.state.targets[index]}
+              onChange={this.handleChange(index)}
               type="number"
               className="textField"
               InputLabelProps={{
@@ -258,7 +259,7 @@ class Portfolio extends React.Component {
             <TextField
               disabled
               id="filled-disabled"
-              defaultValue={this.state.target1}
+              defaultValue={this.state.targets[index]}
               className="textField"
               margin="normal"
               variant="outlined"
@@ -434,36 +435,7 @@ class Portfolio extends React.Component {
                     </Grid>
                   </Grid>
                 );
-            })}    
-            {this.state.recommandOn && (
-              <Grid item xs={6}>
-                <Paper className="fundCard">
-                  <Typography variant="h6" className="title">Recommendation: fund{"B"} :</Typography>
-                  <div className="rellocationRow">
-                    <Button variant="contained" color="default" className="TOPBUTTON">
-                      Sell
-                </Button>
-                    <Button variant="contained" color="secondary" className="TOPBUTTON">
-                      Buy
-                </Button>
-                    <TextField
-                      id="outlined-number"
-                      label="Number"
-                      value={this.state.fundb}
-                      onChange={this.handleChange('bundb')}
-                      type="number"
-                      className="textField"
-                      InputLabelProps={{
-                        shrink: true,
-                      }}
-                      margin="normal"
-                      variant="outlined"
-                    />
-                    <Typography> UNITS</Typography>
-                  </div>
-                </Paper>
-              </Grid>
-            )}
+            })}
             {this.state.setTargetOn && (
               <Grid item xs={12}>
                 <Button onClick={this.setTarget} fullWidth={true} variant="contained" color="secondary" className="TOPBUTTON">
