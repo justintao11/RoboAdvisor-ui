@@ -103,7 +103,8 @@ const data2 = {
   }]
 };
 
-const request = require('request');
+// const request = require('request');
+
 class Portfolio extends React.Component {
   constructor(props) {
     super(props);
@@ -114,36 +115,15 @@ class Portfolio extends React.Component {
       target1: 20,
       fundb: 0,
       toDashboard: false,
-      portfolioId: props.location.state.portfolioId,
       customerId: props.location.state.customerId,
-      selectedPortfolioJSON: null
+      selectedPortfolioPreference: props.location.state.selectedPortfolioPreference,
+      selectedPortfolio: props.location.state.selectedPortfolio
     }
 
     this.handleReallocationClick = this.handleReallocationClick.bind(this);
   }
 
   componentDidMount() {
-    this.getPortfolioPreferenceDetails(this.state.customerId, this.state.portfolioId);
-  }
-
-  getPortfolioPreferenceDetails(custId, portfolioId) {
-    let options = {
-      url: "https://fund-rebalancer-dot-hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/" + portfolioId,
-      method: 'GET',
-      headers: {
-        'x-custid': custId
-      }
-    }
-
-    request(options, (error, response, body) => {
-      if (!error && response.statusCode === 200) {
-        this.setState({
-          selectedPortfolioJSON: JSON.parse(body)
-        })
-      } else {
-        console.log(response.body);
-      }
-    });
   }
 
   handleChange = name => event => {
@@ -202,8 +182,8 @@ class Portfolio extends React.Component {
             </Button>
             </Grid>
             <Grid item xs={12}>
-              <Typography variant="h2" className="title">
-                Portfolio ID: {this.state.portfolioId}
+              <Typography variant="h5" className="title">
+                Portfolio ID: {this.state.selectedPortfolio.id}
               </Typography>
             </Grid>
             <Grid item xs={this.state.recommandOn ? 3 : 9}>

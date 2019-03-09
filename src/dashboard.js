@@ -52,37 +52,37 @@ class PortfolioIconsShown extends React.Component {
     }
   }
 
-  componentDidMount() {
-    this.getPortfolioPreference(this.props.customerId, this.props.portfolioId)
-  }
+  // componentDidMount() {
+  //   this.getPortfolioPreference(this.props.customerId, this.props.portfolioId)
+  // }
 
-  getPortfolioPreference(custId, portfolioId) {
-    let options = {
-      url: "https://fund-rebalancer-dot-hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/" + portfolioId,
-      method: 'GET',
-      headers: {
-        'x-custid': custId
-      }
-    }
+  // getPortfolioPreference(custId, portfolioId) {
+  //   let options = {
+  //     url: "https://fund-rebalancer-dot-hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/" + portfolioId,
+  //     method: 'GET',
+  //     headers: {
+  //       'x-custid': custId
+  //     }
+  //   }
 
-    request(options, (error, response, body) => {
-      if (!error && response.statusCode === 200) {
-        this.setState({
-          isPreferenceSet: true
-        })
-      } else {
-        console.log(response.body);
-      }
-    });
-  }
+  //   request(options, (error, response, body) => {
+  //     if (!error && response.statusCode === 200) {
+  //       this.setState({
+  //         isPreferenceSet: true
+  //       })
+  //     } else {
+  //       console.log(response.body);
+  //     }
+  //   });
+  // }
 
   render() {
     return (
       <div>
-        <IconButton aria-label="Rebalance">
+        <IconButton aria-label="Rebalance" disabled={true} color="secondary">
           <AssessmentIcon />
         </IconButton>
-        <IconButton aria-label="Tune">
+        <IconButton aria-label="Tune" disabled={this.state.isPreferenceSet} color="secondary">
           <TuneIcon />
         </IconButton>
       </div>
@@ -140,26 +140,63 @@ class Dashboard extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      selected: null,
       toLogin: false,
       toPortfolio: false,
-      totalAssets: 0,
-      portfolioId: 24646784,
       customerId: props.location.state.customerId,
-      portfolioList: Array(2).fill(1),
+      totalAssets: 0,
+      portfolioPreferenceDict: {},
+      rebalanceRequiredDict: {}, //TODO: Need backend API to determine if deviation exceeded
+      portfolioDict: {},
+      selectedPortfolioPreference: null,
+      selectedPortfolio: null,
+      portfolioList: Array(1).fill(1),
       isTotalAssetsLoaded: false,
       isPortfoliosLoaded: false,
+      isPortfolioPreferencesLoaded: false,
       isInvalidCustomer: false
     }
-    this.handleClick = this.handleClick.bind(this);
-    this.getPortfolio = this.getPortfolio.bind(this);
-    this.getTotalAssets = this.getTotalAssets.bind(this);
-    this.getPortfolioList = this.getPortfolioList.bind(this);
   }
 
   componentDidMount() {
     this.getPortfolioList(this.state.customerId);
     this.getTotalAssets(this.state.customerId);
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (this.state.portfolioList.length !== prevState.portfolioList.length) {
+      this.getPortfolioPreferences(this.state.customerId, this.state.portfolioList)
+    }
+  }
+
+  getPortfolioList(custId) {
+    let options = {
+      url: "https://fund-rebalancer-dot-hsbc-roboadvisor.appspot.com/roboadvisor/fundsystem/portfolios",
+      method: 'GET',
+      headers: {
+        'x-custid': custId
+      }
+    }
+
+    request(options, (error, response, body) => {
+      if (!error && response.statusCode === 200) {
+        let info = JSON.parse(body);
+        let portfolioDict = {}
+        for (let key = 0; key < info.length; key++) {
+          portfolioDict[info[key].id] = info[key]
+        }
+        this.setState({
+          portfolioList: info,
+          portfolioDict: portfolioDict,
+          isPortfoliosLoaded: true
+        })
+      } else {
+        this.setState({
+          isInvalidCustomer: true
+        })
+        console.log("getPortfolioList res code: " + response.statusCode)
+        console.log(error);
+      }
+    });
   }
 
   getTotalAssets(custId) {
@@ -185,63 +222,44 @@ class Dashboard extends React.Component {
     });
   }
 
-  getPortfolioList(custId) {
-    let options = {
-      url: "https://fund-rebalancer-dot-hsbc-roboadvisor.appspot.com/roboadvisor/fundsystem/portfolios",
-      method: 'GET',
-      headers: {
-        'x-custid': custId
+  getPortfolioPreferences(custId, portfolioList) {
+    let portfolioPreferenceDict = {}
+    
+    for (var i = 0; i < portfolioList.length; i++) {
+      let portfolioId = portfolioList[i].id;
+      let options = {
+        url: "https://fund-rebalancer-dot-hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/" + portfolioId,
+        method: 'GET',
+        headers: {
+          'x-custid': custId
+        }
       }
+  
+      request(options, (error, response, body) => {
+        if (!error && response.statusCode === 200) {
+          let info = JSON.parse(body)
+          portfolioPreferenceDict[portfolioId] = info
+        } else {
+          portfolioPreferenceDict[portfolioId] = null
+          console.log(response.body);
+        }
+      });
     }
 
-    request(options, (error, response, body) => {
-      if (!error && response.statusCode === 200) {
-        let info = JSON.parse(body);
-        this.setState({
-          portfolioList: info,
-          isPortfoliosLoaded: true
-        })
-      } else {
-        this.setState({
-          isInvalidCustomer: true
-        })
-        console.log("getPortfolioList res code: " + response.statusCode)
-        console.log(error);
-      }
-    });
+    this.setState({
+      portfolioPreferenceDict: portfolioPreferenceDict
+    })
   }
 
-
-  getPortfolio(custId, portfolioId) {
-    console.log("getPortfolio " + custId + " " + portfolioId)
-    let options = {
-      url: "https://fund-rebalancer-dot-hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/" + portfolioId,
-      method: 'GET',
-      headers: {
-        'x-custid': custId
-      }
-    }
-
-    request(options, (error, response, body) => {
-      if (!error && response.statusCode === 200) {
-        let info = JSON.parse(body);
-        console.log(info)
-        this.setState({
-          toPortfolio: true
-        });
-      } else {
-        console.log("getPortfolio res code: " + response.statusCode)
-        console.log(error);
-      }
-    });
+  handleClick = (i) => {
+    this.setState({
+      selectedPortfolioPreference : this.state.portfolioPreferenceDict[i],
+      selectedPortfolio: this.state.portfolioDict[i],
+      toPortfolio : true
+    })
   }
 
-  handleClick(i) {
-    console.log("this is handleClick: " + i)
-    this.getPortfolio(this.state.customerId, i);
-  }
-
-  handleLogout = (e) => {
+  handleLogout = () => {
     this.setState({
       toLogin: true
     })
@@ -261,7 +279,8 @@ class Dashboard extends React.Component {
           pathname: '/portfolio',
           state: {
             customerId: this.state.customerId,
-            portfolioId: this.state.portfolioId
+            selectedPortfolioPreference: this.state.selectedPortfolioPreference,
+            selectedPortfolio: this.state.selectedPortfolio
           }
         }
       }
@@ -291,7 +310,7 @@ class Dashboard extends React.Component {
                 </Typography>
           </div>
           <Grid container justify="flex-end" spacing={16}>
-            <Grid item xs={24}>
+            <Grid item xs={12}>
               <TCard className="card-stats">
                 <CardBody>
                   <Row>
@@ -323,7 +342,7 @@ class Dashboard extends React.Component {
                   <PortfolioList
                     customerId={this.state.customerId}
                     portfolioList={this.state.portfolioList}
-                    onClick={i => this.handleClick(i)}
+                    onClick={(i) => this.handleClick(i)}
                   />
                 </CardContent>
               </TCard>
