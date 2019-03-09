@@ -8,10 +8,23 @@
 }
 
 .fundCard {
-	height: 200px;
+	height: 120px;
+
 }
 
-.rellocationRow {
+.fundIDString {
+	padding-top: 20px;
+
+}
+
+.fundColumn {
+	display: flex;
+	flex-direction: row;
+	text-align: left;
+	align-items: left;
+}
+
+.percentColumn {
 	display: flex;
 	flex-direction: row;
 	text-align: center;

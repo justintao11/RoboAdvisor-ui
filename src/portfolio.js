@@ -15,6 +15,12 @@ import {
 } from "./variables/charts.jsx";
 const request = require('request');
 
+const styles = theme => ({
+  multilineColor:{
+      color:'red'
+  }
+});
+
 class Portfolio extends React.Component {
   constructor(props) {
     super(props);
@@ -34,7 +40,7 @@ class Portfolio extends React.Component {
     }
 
     this.handleSetTargetClick = this.handleSetTargetClick.bind(this);
-    this.handleSetTargetClick = this.getRebalance(this.state.selectedPortfolio.id, this.state.customerId);
+    this.getRebalance = this.getRebalance(this.state.selectedPortfolio.id, this.state.customerId);
   }
 
   componentDidMount() {
@@ -136,6 +142,7 @@ class Portfolio extends React.Component {
   createFund(index) {
     let portion = Math.round(this.state.funds[index].balance.amount * 100 / this.state.total);
     return (
+    /*
         <Paper className="fundCard">
           <div className="fund">
             <Typography variant="display2" className="title">Fund ID: {this.state.funds[index].fundId}</Typography>
@@ -162,7 +169,83 @@ class Portfolio extends React.Component {
             <Typography variant="h6" className="title">Current %: {portion}</Typography>
           </div>
         </Paper>)
-  }
+  */
+
+      <Paper className="fundCard"> 
+        <Grid container direction="row">
+          <Grid item xs = {4} container direction="column" className="fundColumn">
+            <Grid item>
+              <Typography variant="display1">Fund ID</Typography>
+            </Grid>
+            <Grid item>
+              <Typography className="fundIDString" variant="h4">{this.state.funds[index].fundId}</Typography>
+            </Grid>
+          </Grid>          
+      
+        <Grid item xs = {4} container direction="column" className="percentColumn">
+          <Grid item>
+            <Typography variant="display1">Current</Typography>
+          </Grid>
+
+          <Grid item>
+            <TextField
+            disabled
+            id="filled-disabled"
+            defaultValue={portion}
+            className="textField"
+            margin="normal"
+            variant="outlined"
+            style = {{width: 60}}                     
+            />
+          </Grid>
+        </Grid>
+      
+      
+        {this.state.setTargetOn ? (
+          <Grid item xs = {4} container direction="column" className="percentColumn">
+          <Grid item>
+            <Typography variant="display1" >Target </Typography>
+          </Grid>
+            <TextField
+              id="outlined-number"
+              label="%"
+              value={this.state.target1}
+              onChange={this.handleChange('target1')}
+              type="number"
+              className="textField"
+              InputLabelProps={{
+              shrink: true,
+              }}
+              margin="normal"
+              variant="outlined"
+              style = {{width: 60}}
+                          
+            />                      
+          </Grid> 
+        ) : (
+          <Grid item xs = {4} container direction="column" className="percentColumn">
+            <Grid item>
+            <Typography variant="display1"> Target </Typography>
+            </Grid>
+            <Grid item>
+            <TextField
+              disabled
+              id="filled-disabled"
+              defaultValue={this.state.target1}
+              className="textField"
+              margin="normal"
+              variant="outlined"
+              style = {{width: 60}}
+                                   
+            />
+            </Grid>
+          </Grid>
+          )}
+          
+      </Grid>
+    </Paper>
+  
+    )}
 
   createChart(index) {
     let portion = Math.round(this.state.funds[index].balance.amount * 100 / this.state.total);
