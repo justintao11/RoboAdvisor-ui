@@ -84,20 +84,27 @@ class Portfolio extends React.Component {
     super(props);
     this.state = {
       selected: null,
-      reallocationOn: false,
+      setTargetOn: false,
       recommandOn: false,
       target1: 20,
       fundb: 0,
       toDashboard: false,
+      allowedDeviation: 5,
       customerId: props.location.state.customerId,
       selectedPortfolioPreference: props.location.state.selectedPortfolioPreference,
       selectedPortfolio: props.location.state.selectedPortfolio
     }
 
-    this.handleReallocationClick = this.handleReallocationClick.bind(this);
+    this.handleSetTargetClick = this.handleSetTargetClick.bind(this);
   }
 
   componentDidMount() {
+  }
+
+  changeAllowedAllocation = name => e => {
+    this.setState({
+      allowedDeviation: e.target.value,
+    });
   }
 
   handleChange = name => event => {
@@ -106,9 +113,16 @@ class Portfolio extends React.Component {
     });
   };
 
+  handleSetTargetClick = (e) => {
+    this.setState({
+      setTargetOn: true
+    })
+  }
+
   handleReallocationClick = (e) => {
     this.setState({
-      reallocationOn: true
+      recommandOn: true,
+      setTargetOn: false
     })
   }
 
@@ -120,8 +134,8 @@ class Portfolio extends React.Component {
 
   setTarget = (e) => {
     this.setState({
-      reallocationOn: false,
-      recommandOn: true
+      setTargetOn: false,
+      recommandOn: false
     })
   }
 
@@ -150,10 +164,26 @@ class Portfolio extends React.Component {
             <Grid item xs={12}>
               <Button variant="contained" onClick={this.handleBack} color="secondary" className="TOPBUTTON">
                 Back
-            </Button>
+              </Button>
+              <Button variant="contained" onClick={this.handleSetTargetClick} color="default" className="TOPBUTTON">
+                Set TARGET
+              </Button>
               <Button variant="contained" onClick={this.handleReallocationClick} color="default" className="TOPBUTTON">
-                Reallocate
-            </Button>
+                Rebalance
+              </Button>
+              <TextField
+                id="outlined-number"
+                label="Allowed Deviation"
+                value={this.state.allowedDeviation}
+                onChange={this.changeAllowedAllocation()}
+                type="number"
+                className="textField"
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                margin="normal"
+                variant="outlined"
+              />
             </Grid>
             <Grid item xs={12}>
               <Typography variant="h5" className="title">
@@ -164,7 +194,7 @@ class Portfolio extends React.Component {
               <Paper className="fundCard">
                 <div className="fund">
                   <Typography variant="display2" className="title">Fund A</Typography>
-                  {this.state.reallocationOn ? (
+                  {this.state.setTargetOn ? (
                     <div className="rellocationRow">
                       <Typography variant="h6" className="title">Target %: </Typography>
                       <TextField
@@ -228,7 +258,7 @@ class Portfolio extends React.Component {
               <Paper className="fundCard">
                 <div className="fund">
                   <Typography variant="display2" className="title">Fund B</Typography>
-                  {this.state.reallocationOn ? (
+                  {this.state.setTargetOn ? (
                     <div className="rellocationRow">
                       <Typography variant="h6" className="title">Target %: </Typography>
                       <TextField
@@ -291,7 +321,7 @@ class Portfolio extends React.Component {
               <Paper className="fundCard">
                 <div className="fund">
                   <Typography variant="display2" className="title">Fund C</Typography>
-                  {this.state.reallocationOn ? (
+                  {this.state.setTargetOn ? (
                     <div className="rellocationRow">
                       <Typography variant="h6" className="title">Target %: </Typography>
                       <TextField
@@ -350,10 +380,10 @@ class Portfolio extends React.Component {
                 </Paper>
               </Grid>
             )}
-            {this.state.reallocationOn && (
+            {this.state.setTargetOn && (
               <Grid item xs={12}>
                 <Button onClick={this.setTarget} fullWidth={true} variant="contained" color="secondary" className="TOPBUTTON">
-                  SET TARGET
+                  SAVE
               </Button>
               </Grid>
             )}
