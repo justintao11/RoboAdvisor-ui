@@ -326,7 +326,7 @@ class Portfolio extends React.Component {
     return (
       <Grid item xs={6}>
         <Paper className="fundCard">
-          <Typography variant="h6" className="title">Recommendation: fund{"B"} :</Typography>
+          <Typography variant="h6" className="title">Recommendation: fund {this.state.funds[index].fundId}:</Typography>
           <div className="rellocationRow">
             <Button variant="contained" color="default" className="TOPBUTTON">
               Sell
