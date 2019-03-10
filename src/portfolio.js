@@ -22,11 +22,6 @@ import {
 import transitions from "@material-ui/core/styles/transitions";
 const request = require('request');
 
-const styles = theme => ({
-  multilineColor:{
-      color:'red'
-  }
-});
 
 class Portfolio extends React.Component {
   constructor(props) {
@@ -35,6 +30,7 @@ class Portfolio extends React.Component {
       selected: null,
       setTargetOn: false,
       recommandOn: false,
+      fundBalances: {},
       funds: [],
       targets: [25, 25, 25],
       total: 1,
@@ -129,7 +125,7 @@ class Portfolio extends React.Component {
     console.log(sum);
     if(sum !== 100) {
       this.setState({
-        errorMessage: "Target is not add up to 100",
+        errorMessage: "Target does not add up to 100",
         warningOpen: true
       })
     } else {
@@ -168,6 +164,7 @@ class Portfolio extends React.Component {
         let info = JSON.parse(body);
         console.log(info);
         let funds;
+        let fundBalances = new Map();
         for (let i = 0; i<info.length; i++) {
           if(info[i].id === this.state.selectedPortfolio.id) {
             funds = info[i].holdings;
@@ -175,10 +172,12 @@ class Portfolio extends React.Component {
         }
         let total = 0;
         for(let i =0; i<funds.length; i++) {
+          fundBalances.set(funds[i].fundId, funds[i].balance);
           total += funds[i].balance.amount;
         }
         this.setState({
           funds: funds,
+          fundBalances: fundBalances,
           total: total
         });
       } else {
@@ -224,7 +223,7 @@ class Portfolio extends React.Component {
 
       <Paper className="fundCard"> 
         <Grid container direction="row">
-          <Grid item xs = {4} container direction="column" className="fundColumn">
+          <Grid item xs={4} container direction="column" className="fundColumn">
             <Grid item>
               <Typography variant="display1">Fund ID</Typography>
             </Grid>
@@ -233,7 +232,7 @@ class Portfolio extends React.Component {
             </Grid>
           </Grid>          
       
-        <Grid item xs = {4} container direction="column" className="percentColumn">
+        <Grid item xs={4} container direction="column" className="percentColumn">
           <Grid item>
             <Typography variant="display1">Current</Typography>
           </Grid>
@@ -325,9 +324,9 @@ class Portfolio extends React.Component {
 
   createRecommand(index) {
     return (
-      <Grid item xs={6}>
+      <Grid item xs={5}>
         <Paper className="fundCard">
-          <Typography variant="h6">Recommendation: fund{"B"} :</Typography>
+          <Typography variant="h6">Recommendation:</Typography>
           <Grid item container direction="row" className="recommendCard">
             <Grid item className="percentColumn">
               <Button variant="contained" color="default" className="TOPBUTTON">
@@ -342,7 +341,7 @@ class Portfolio extends React.Component {
             <Grid item className="percentColumn">
             <TextField
               id="outlined-number"
-              label="Number"
+              label="Units"
               value = {this.state.indexrec[this.state.funds[index].fundId]}
               onChange={this.handleChange('bundb')}
               type="number"
@@ -363,11 +362,21 @@ class Portfolio extends React.Component {
 
   createMiniFund(index) {
     let portion = Math.round(this.state.funds[index].balance.amount * 100 / this.state.total);
+    let currFundID = this.state.funds[index].fundId;
+    let currFund = this.state.fundBalances.get(currFundID);
     return (
+        
         <Paper key={index} className="fundCard">
           <Grid container wrap="nowrap" direction="column" className="miniFundCard">
             <Grid item className="fundCardText">
-              <Typography variant="subtitle2">Fund ID: {this.state.funds[index].fundId}</Typography>
+              <Typography variant="subtitle2">Fund ID: {currFundID}</Typography>
+            </Grid>
+            <Grid item className="fundCardText">
+              <Typography variant="h6" inline="true">Balance: </Typography>
+              <Typography variant="h6" inline="true" color="secondary"> {'$' + currFund.amount + ' ' + currFund.currency} </Typography>
+            </Grid>
+            <Grid item className="fundCardText">
+              <Typography variant="h6">Current: {portion + '%'}</Typography>
             </Grid>
             {this.state.setTargetOn ? (
               <Grid item className="fundCardText">
@@ -391,9 +400,6 @@ class Portfolio extends React.Component {
                   <Typography variant="h6">Target: {this.state.targets[index] + '%'}</Typography>
                 </Grid>
               )}
-            <Grid item className="fundCardText">
-              <Typography variant="h6">Current: {portion + '%'}</Typography>
-            </Grid>
           </Grid>
         </Paper>)
   }
@@ -459,15 +465,18 @@ class Portfolio extends React.Component {
             </Grid>      
             {this.state.funds.map(function(object, i){
                 return (
+                  
                   <Grid item xs={12}>
-                    <Grid container spacing={24}>
-                    <Grid item xs={that.state.recommandOn ? 3 : 9}>
+                    <Grid spacing={24} container direction="row">
+                    
+                    <Grid item xs={that.state.recommandOn ? 4 : 9}>
                       {that.state.recommandOn? that.createMiniFund(i) : that.createFund(i)}
                     </Grid>
-                    {that.state.recommandOn && that.createRecommand(i)}
-                    <Grid item xs={3}>
+                    <Grid item xs={3} className="donutCharts">
                       {that.createChart(i)}
                     </Grid>
+                    {that.state.recommandOn && that.createRecommand(i)}
+
                     </Grid>
                   </Grid>
                 );
@@ -480,14 +489,12 @@ class Portfolio extends React.Component {
               </Grid>
             )}
             {this.state.recommandOn && (
-              <Grid container spacing={24}>
-                <Grid item xs={6}>
-                  <Button onClick={this.setTarget} fullWidth={true} variant="contained" color="secondary" className="TOPBUTTON">
+              <Grid container spacing={24} className="bottomRow">
+                <Grid item>
+                  <Button onClick={this.setTarget} variant="contained" color="secondary" className="TOPBUTTON">
                     MODIFY
                   </Button>
-                </Grid>
-                <Grid item xs={6}>
-                  <Button onClick={this.executeRecommend} fullWidth={true} variant="contained" color="secondary" className="TOPBUTTON">
+                  <Button onClick={this.executeRecommend} variant="contained" color="secondary" className="TOPBUTTON">
                     EXECUTE
                   </Button>
                 </Grid>

@@ -7,8 +7,12 @@
 	margin-right: 10px !important;
 }
 
+.bottomRow{
+	justify-content: flex-end;
+}
+
 .recommendCard {
-	margin-left: 10px !important;
+	padding-left:10px;
 }
 
 .fundCard {
@@ -17,12 +21,21 @@
 }
 
 .fundCardText{
-	height: 40px;
+	
 	
 }
 
+
+.donutCharts{
+	justify-content: center;
+	align-content: center;
+	align-items: center;
+}
+
 .miniFundCard{
+	padding-left:5px;
 	text-align: left;
+	
 	
 }
 
