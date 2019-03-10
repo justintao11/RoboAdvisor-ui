@@ -19,6 +19,7 @@ import ErrorIcon from '@material-ui/icons/Error';
 import {
   dashboardEmailStatisticsChart,
 } from "./variables/charts.jsx";
+import transitions from "@material-ui/core/styles/transitions";
 const request = require('request');
 
 const styles = theme => ({
@@ -37,6 +38,8 @@ class Portfolio extends React.Component {
       funds: [],
       targets: [25, 25, 25],
       total: 1,
+      recommendations: [],
+      indexrec:{},
       warningOpen: false,
       toDashboard: false,
       allowedDeviation: 5,
@@ -59,14 +62,34 @@ class Portfolio extends React.Component {
                   headers: {'x-custid':customerId}}, function(error, response, body){
       if(!error&&response.statusCode===200){
         console.log(body);
+        let trans = JSON.parse(body);
+        this.setState({
+          recommendations:trans.transactions
+        });
+        for (let k = 0; k<this.state.recommendations.length; k++){
+            let index = this.state.recommendations[k].fundId;
+            let value = this.state.recommendations[k].units;
+            this.state.indexrec[index] = value;
+        }
       }else{
         console.log("error!!!");
         console.log("getRebalance res code: " + response.statusCode);
         console.log(customerId);
         console.log(selectedPortfolio);
       }
-    });
+    }.bind(this));
   }
+
+  // getrecommendationByIndex = index =>{
+  //   this.getRebalance(this.state.selectedPortfolio.id, this.state.customerId);
+  //   let listoffundID = []
+  //   for (let k = 0; k<this.state.recommendations.length; k++){
+  //     index = this.state.recommendations[k].fundId;
+  //     let value = this.state.recommendations[k].units;
+  //     this.state.indexrec[index] = value;
+  //   }
+  // }
+  
 
   changeAllowedAllocation = name => e => {
     this.setState({
@@ -314,7 +337,7 @@ class Portfolio extends React.Component {
             <TextField
               id="outlined-number"
               label="Number"
-              value={this.state.fundb}
+              value = {this.state.indexrec[this.state.funds[index].fundId]}
               onChange={this.handleChange('bundb')}
               type="number"
               className="textField"
