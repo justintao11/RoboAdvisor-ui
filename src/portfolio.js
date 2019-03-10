@@ -36,7 +36,7 @@ class Portfolio extends React.Component {
       setTargetOn: false,
       recommandOn: false,
       funds: [],
-      targets: [25, 25, 25],
+      targets: [],
       total: 1,
       recommendations: [],
       indexrec:{},
@@ -327,7 +327,7 @@ class Portfolio extends React.Component {
     return (
       <Grid item xs={6}>
         <Paper className="fundCard">
-          <Typography variant="h6">Recommendation: Fund {this.state.funds[index].fundId}:</Typography>
+          <Typography variant="h6">Recommendation:</Typography>
           <Grid item container direction="row" className="recommendCard">
             <Grid item className="percentColumn">
               <Button variant="contained" color="default" className="TOPBUTTON">
