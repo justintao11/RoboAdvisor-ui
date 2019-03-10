@@ -4,12 +4,26 @@
 
 .TOPBUTTON {
 	width: 120px;
-	margin-right: 20px !important;
+	margin-right: 10px !important;
+}
+
+.recommendCard {
+	margin-left: 10px !important;
 }
 
 .fundCard {
 	height: 120px;
 
+}
+
+.fundCardText{
+	height: 40px;
+	
+}
+
+.miniFundCard{
+	text-align: left;
+	
 }
 
 .fundIDString {

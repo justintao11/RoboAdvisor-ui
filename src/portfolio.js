@@ -242,8 +242,9 @@ class Portfolio extends React.Component {
               type="number"
               className="textField"
               InputLabelProps={{
-              shrink: true,
+                shrink: true,
               }}
+              inputStyle={{ backgroundColor: 'red' }}
               margin="normal"
               variant="outlined"
               style = {{width: 60}}
@@ -303,17 +304,22 @@ class Portfolio extends React.Component {
     return (
       <Grid item xs={6}>
         <Paper className="fundCard">
-          <Typography variant="h6" className="title">Recommendation: fund{"B"} :</Typography>
-          <div className="rellocationRow">
-            <Button variant="contained" color="default" className="TOPBUTTON">
-              Sell
-        </Button>
-            <Button variant="contained" color="secondary" className="TOPBUTTON">
-              Buy
-        </Button>
+          <Typography variant="h6">Recommendation: fund{"B"} :</Typography>
+          <Grid item container direction="row" className="recommendCard">
+            <Grid item className="percentColumn">
+              <Button variant="contained" color="default" className="TOPBUTTON">
+                Sell
+              </Button>
+            </Grid>
+            <Grid item className="percentColumn">
+              <Button variant="contained" color="secondary" className="TOPBUTTON">
+                Buy
+              </Button>
+            </Grid>
+            <Grid item className="percentColumn">
             <TextField
               id="outlined-number"
-              label="Number"
+              label="Units"
               value={this.state.fundb}
               onChange={this.handleChange('bundb')}
               type="number"
@@ -323,9 +329,10 @@ class Portfolio extends React.Component {
               }}
               margin="normal"
               variant="outlined"
+              style = {{width: 100}}
             />
-            <Typography> UNITS</Typography>
-          </div>
+            </Grid>
+          </Grid>
         </Paper>
       </Grid>
     )
@@ -335,11 +342,13 @@ class Portfolio extends React.Component {
     let portion = Math.round(this.state.funds[index].balance.amount * 100 / this.state.total);
     return (
         <Paper key={index} className="fundCard">
-          <div className="fund">
-            <Typography variant="display2" className="title">Fund ID: {this.state.funds[index].fundId}</Typography>
+          <Grid container wrap="nowrap" direction="column" className="miniFundCard">
+            <Grid item className="fundCardText">
+              <Typography variant="subtitle2">Fund ID: {this.state.funds[index].fundId}</Typography>
+            </Grid>
             {this.state.setTargetOn ? (
-              <div className="rellocationRow">
-                <Typography variant="h6" className="title">Target %:</Typography>
+              <Grid item className="fundCardText">
+                <Typography variant="h6">Target: </Typography>
                 <TextField
                   id="outlined-number"
                   label="Number"
@@ -353,12 +362,16 @@ class Portfolio extends React.Component {
                   margin="normal"
                   variant="outlined"
                 />
-              </div>
+              </Grid>
             ) : (
-                <Typography variant="h6" className="title">Target %: {this.state.targets[index]}</Typography>
+                <Grid item className="fundCardText">
+                  <Typography variant="h6">Target: {this.state.targets[index] + '%'}</Typography>
+                </Grid>
               )}
-            <Typography variant="h6" className="title">Current %: {portion}</Typography>
-          </div>
+            <Grid item className="fundCardText">
+              <Typography variant="h6">Current: {portion + '%'}</Typography>
+            </Grid>
+          </Grid>
         </Paper>)
   }
 
