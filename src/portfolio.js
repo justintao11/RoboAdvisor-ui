@@ -32,7 +32,7 @@ class Portfolio extends React.Component {
       recommandOn: false,
       fundBalances: {},
       funds: [],
-      targets: [25, 25, 25],
+      targets: [],
       total: 1,
       recommendations: [],
       indexrec:{},
