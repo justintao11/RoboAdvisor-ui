@@ -10,7 +10,7 @@ import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
 import Snackbar from '@material-ui/core/Snackbar';
 import SnackbarContent from '@material-ui/core/SnackbarContent';
-import WarningIcon from '@material-ui/icons/Warning';
+// import WarningIcon from '@material-ui/icons/Warning';
 import './portfolio.css';
 import { Redirect } from 'react-router-dom';
 import IconButton from '@material-ui/core/IconButton';
@@ -20,7 +20,7 @@ import ErrorIcon from '@material-ui/icons/Error';
 import {
   dashboardEmailStatisticsChart,
 } from "./variables/charts.jsx";
-import transitions from "@material-ui/core/styles/transitions";
+// import transitions from "@material-ui/core/styles/transitions";
 const request = require('request');
 
 
@@ -294,7 +294,7 @@ class Portfolio extends React.Component {
     )}
 
   createChart(index) {
-    let portion = Math.round(this.state.funds[index].balance.amount * 100 / this.state.total);
+    // let portion = Math.round(this.state.funds[index].balance.amount * 100 / this.state.total);
     let graph = {
       datasets: [{
         data: [],
