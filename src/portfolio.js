@@ -236,7 +236,7 @@ class Portfolio extends React.Component {
     return (      
       <Paper className="fundCard"> 
         <Grid container direction="row">
-          <Grid item xs={3} container direction="column" className="fundColumn">
+          <Grid item xs={4} container direction="column" className="fundColumn">
             <Grid item>
               <Typography variant="subtitle1">Fund ID</Typography>
             </Grid>
@@ -338,8 +338,7 @@ class Portfolio extends React.Component {
   }
 
   createRecommendation(index) {
-    return (
-      <Grid item xs={5}>
+    return (      
         <Paper className="fundCard">
           <Typography variant="subtitle1">Recommendation:</Typography>
           <Grid item container direction="row" className="recommendCard">
@@ -367,8 +366,7 @@ class Portfolio extends React.Component {
             />
             </Grid>
           </Grid>
-        </Paper>
-      </Grid>
+        </Paper>      
     )
   }
 
@@ -474,8 +472,12 @@ class Portfolio extends React.Component {
                 InputLabelProps={{
                   shrink: true,
                 }}
+                InputProps={{
+                  endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                }}
                 margin="normal"
                 variant="outlined"
+                style={{width: 200}}
               />
             ):(
               <Typography variant="subtitle1"  className="allowedDeviationText">
@@ -487,14 +489,16 @@ class Portfolio extends React.Component {
             {this.state.funds.map(function(object, i){
                 return (
                   <div className="fundsTable">                                  
-                  <Grid container xs={12} justify="flex-end" direction="row" spacing={24} className="fundsRow">  
-                    <Grid item xs={that.state.recommendOn ? 4 : 9}>
+                  <Grid xs={12} container justify="flex-start" direction="row" spacing={24} className="fundsRow">  
+                    <Grid item xs={that.state.recommendOn ? 5 : 9}>
                       {that.state.recommendOn? that.createMiniFund(i) : that.createFund(i)}
                     </Grid>
-                    <Grid item xs={3} className="donutCharts">
+                    <Grid item xs={1.5} className="donutCharts">
                       {that.createChart(i)}
                     </Grid>
-                    {that.state.recommendOn && that.createRecommendation(i)}                    
+                    <Grid item xs={5.5} >
+                      {that.state.recommendOn && that.createRecommendation(i)} 
+                    </Grid>              
                   </Grid>
                   </div> 
                 );

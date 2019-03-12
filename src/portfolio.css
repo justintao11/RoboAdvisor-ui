@@ -33,10 +33,9 @@
 
 .fundCard {
 	height: 120px;
-}
+	margin-top: 10px;
+	margin-bottom: 5px;
 
-.fundCardText{
-	
 }
 
 .sellButtonClass {
@@ -45,17 +44,13 @@
 
 }
 
-
-
 .miniFundCard{
 	padding-left:5px;
-	text-align: left;
-	
+	text-align: left;	
 }
 
 .fundIDString {
 	padding-top: 20px;
-
 }
 
 .fundColumn {
@@ -71,6 +66,8 @@
 	text-align: center;
 	align-items: center;
 }
+
+
 
 /*.closeIcon {
   fontSize: 20;
