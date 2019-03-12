@@ -1,6 +1,15 @@
 import React from "react";
 
 import {
+  Card as TCard,
+  // CardHeader,
+  CardBody,
+  // CardFooter,
+  // CardTitle,
+  Row,
+  Col
+} from "reactstrap";
+import {
   Doughnut
 } from "react-chartjs-2";
 import Paper from '@material-ui/core/Paper';
@@ -16,10 +25,13 @@ import { Redirect } from 'react-router-dom';
 import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
 import ErrorIcon from '@material-ui/icons/Error';
+import AssessmentIcon from '@material-ui/icons/AssessmentOutlined';
+import InputAdornment from '@material-ui/core/InputAdornment';
 
-import {
-  dashboardEmailStatisticsChart,
-} from "./variables/charts.jsx";
+
+// import {
+//   dashboardEmailStatisticsChart,
+// } from "./variables/charts.jsx";
 // import transitions from "@material-ui/core/styles/transitions";
 const request = require('request');
 
@@ -32,35 +44,57 @@ class Portfolio extends React.Component {
       toDashboard: false,
       setAllocationOn: false,
       recommendOn: false,
-      recommendationSet: false,
+      preferencesSet: true,
       funds: [],   
       fundBalances:{},     // dictionary of fundID:{balance, currency}    // 
       total: 1,             // total balance of all funds//
       targets: [],          // target % for each fund//
-      allowedDeviation: 5,  // max deviation for portfolio//
+      allowedDeviation: null,  // max deviation for portfolio//
       recommendations: [],  // list of recommendations//
       indexRec:{},         // index of current recommendation? (not sure)//
       warningOpen: false,   // warning bar if allocation != add to 100//
       errorMessage: "bla bla",     // warning bar error message//
       customerId: props.location.state.customerId,
       selectedPortfolioPreference: props.location.state.selectedPortfolioPreference,
-      selectedPortfolio: props.location.state.selectedPortfolio
+      selectedPortfolio: props.location.state.selectedPortfolio,
+      portfolioType: null,
+      allocatedFunds:{}
     }
 
     this.handleSetAllocationClick = this.handleSetAllocationClick.bind(this);
     this.handleRebalanceClick = this.handleRebalanceClick.bind(this);
     this.getRebalance = this.getRebalance.bind(this);
+    this.populatePrefs = this.populatePrefs.bind(this);
     //this.setAllowedDeviation = this.setAllowedDeviation.bind(this);
   }
 
   componentDidMount() {
     this.getFunds(this.state.customerId);
+    this.populatePrefs();    
   }
 
+  // Grab portfolio deviation & fund allocation if exists
+  populatePrefs(){
+    let prefs = this.state.selectedPortfolioPreference;
+    let allocations = {};
+    if (prefs !== null){
+      for (let i = 0; i < prefs.allocations.length; i++){
+        allocations[i] = prefs.allocations[i];
+      }
+      this.setState({
+        allowedDeviation: prefs.deviation,
+        preferencesSet: true,
+        portfolioType: prefs.type,
+        allocatedFunds: allocations
+      });
+    }
+    // TODO: else highlight set allocation button
+  }
 
+  // TODO: not fully set up
   getRebalance(selectedPortfolio, custID) {
     let options = {
-      url: 'http://fund-rebalancer.hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/'+selectedPortfolio+'/rebalance',      
+      url: "http://fund-rebalancer.hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/"+selectedPortfolio+"/rebalance",      
       method: 'GET',
       headers: {
         'x-custid': custID
@@ -87,7 +121,7 @@ class Portfolio extends React.Component {
         //   temp[i] = 20;
         // }
         this.setState({
-          recommendationSet: false,
+          //preferencesSet: false,
           //targets: temp
         });
         // console.log(response.statusCode);
@@ -118,17 +152,21 @@ class Portfolio extends React.Component {
   }
 
   handleRebalanceClick = (e) => {
-    if (this.state.recommendationSet){
+    if (this.state.preferencesSet && !this.state.recommendOn){
       this.getRebalance(this.state.selectedPortfolio.id, this.state.customerId);
       this.setState({
         recommendOn: true,
         setAllocationOn: false,
         warningOpen: false
       })
-    } else {
+    } else if (!this.state.preferencesSet && !this.state.recommendOn){
       this.setState({
         errorMessage: "Allocation has not been set",
         warningOpen: true
+      })
+    } else {
+      this.setState({
+        recommendOn: false
       })
     }
   }
@@ -162,7 +200,7 @@ class Portfolio extends React.Component {
         warningOpen: false,
         setAllocationOn: false,
         recommendOn: false,
-        recommendationSet: true
+        preferencesSet: true
       })
     }
     
@@ -218,7 +256,6 @@ class Portfolio extends React.Component {
   }
 
 
-
   createFund(index) {
     let portion = Math.round(this.state.funds[index].balance.amount * 100 / this.state.total);
     return (      
@@ -226,16 +263,16 @@ class Portfolio extends React.Component {
         <Grid container direction="row">
           <Grid item xs={4} container direction="column" className="fundColumn">
             <Grid item>
-              <Typography variant="display1">Fund ID</Typography>
+              <Typography variant="subtitle1">Fund ID</Typography>
             </Grid>
             <Grid item>
-              <Typography className="fundIDString" variant="h4">{this.state.funds[index].fundId}</Typography>
+              <Typography className="fundIDString" variant="subtitle1">{this.state.funds[index].fundId}</Typography>
             </Grid>
           </Grid>          
       
         <Grid item xs={4} container direction="column" className="percentColumn">
           <Grid item>
-            <Typography variant="display1">Current</Typography>
+            <Typography variant="subtitle1">Current</Typography>
           </Grid>
 
           <Grid item>
@@ -246,14 +283,14 @@ class Portfolio extends React.Component {
             className="textField"
             margin="normal"
             variant="outlined"
-            style = {{width: 60}}                     
+            style = {{width: 80}}                     
             />
           </Grid>
         </Grid> 
         {this.state.setAllocationOn ? (
           <Grid item xs = {4} container direction="column" className="percentColumn">
           <Grid item>
-            <Typography variant="display1" >Target </Typography>
+            <Typography variant="subtitle1" >Target </Typography>
           </Grid>
             <TextField
               id="outlined-number"
@@ -261,20 +298,16 @@ class Portfolio extends React.Component {
               value={this.state.targets[index]}
               onChange={this.handleTargetChange(index)}
               type="number"
-              className="textField"
-              InputLabelProps={{
-                shrink: true,
-              }}
-              inputStyle={{ backgroundColor: 'red' }}
+              className="textField"       
               margin="normal"
               variant="outlined"
-              style = {{width: 60}}                          
+              style = {{width: 80}}                          
             />                      
           </Grid> 
         ) : (
           <Grid item xs = {4} container direction="column" className="percentColumn">
             <Grid item>
-            <Typography variant="display1"> Target </Typography>
+            <Typography variant="subtitle1"> Target </Typography>
             </Grid>
             <Grid item>
             <TextField
@@ -283,8 +316,8 @@ class Portfolio extends React.Component {
               defaultValue={this.state.targets[index]}
               className="textField"
               margin="normal"
-              variant="outlined"
-              style = {{width: 60}}                                   
+              variant="outlined"              
+              style = {{width: 80}}                                   
             />
             </Grid>
           </Grid>
@@ -299,10 +332,12 @@ class Portfolio extends React.Component {
       datasets: [{
         data: [],
         backgroundColor: []
-      }]
+      }],
+      labels: []
     };
     let funds = this.state.funds;
-    for(let i=0; i<funds.length; i++) {
+    for(let i=0; i<funds.length; i++) {      
+      graph.labels.push(this.state.funds[i].fundId);
       graph.datasets[0].data.push(Math.round(this.state.funds[i].balance.amount * 100 / this.state.total));
       let color = (i === index) ? '#FF6384' : '#e0e0e0';
       graph.datasets[0].backgroundColor.push(color);
@@ -311,25 +346,34 @@ class Portfolio extends React.Component {
     return (
         <Doughnut
           key={index}
-          data={graph}
-          options={dashboardEmailStatisticsChart.options}
+          data={graph}          
+          width={100}
+          height={120}
+          options={{
+            padding:"0px",
+            responsive: false,
+            maintainAspectRatio: true,
+            legend:{
+              display:false,
+            }
+          }}         
+          //options={dashboardEmailStatisticsChart.options}
         />
     )
   }
 
   createRecommendation(index) {
-    return (
-      <Grid item xs={5}>
+    return (      
         <Paper className="fundCard">
-          <Typography variant="h6">Recommendation:</Typography>
+          <Typography variant="subtitle1">Recommendation:</Typography>
           <Grid item container direction="row" className="recommendCard">
             <Grid item className="percentColumn">
-              <Button variant="contained" color="default" className="TOPBUTTON">
+              <Button variant="contained" color="default" className="sellButtonClass">
                 Sell
               </Button>
             </Grid>
             <Grid item className="percentColumn">
-              <Button variant="contained" color="secondary" className="TOPBUTTON">
+              <Button variant="contained" color="secondary" className="sellButtonClass">
                 Buy
               </Button>
             </Grid>
@@ -338,20 +382,16 @@ class Portfolio extends React.Component {
               id="outlined-number"
               label="Units"
               value = {this.state.indexRec[this.state.funds[index].fundId]}
-              onChange={this.handleTargetChange('bundb')}
+              //onChange={this.handleTargetChange('bundb')}
               type="number"
               className="textField"
-              InputLabelProps={{
-                shrink: true,
-              }}
               margin="normal"
               variant="outlined"
               style = {{width: 100}}
             />
             </Grid>
           </Grid>
-        </Paper>
-      </Grid>
+        </Paper>      
     )
   }
 
@@ -361,21 +401,21 @@ class Portfolio extends React.Component {
     let currFund = this.state.fundBalances.get(currFundID);
     return (      
         
-      <Paper key={index} className="fundCard">
-        <Grid container wrap="nowrap" direction="column" className="miniFundCard">
+      <Paper className="fundCard">
+        <Grid container direction="column" className="miniFundCard">
           <Grid item className="fundCardText">
-            <Typography variant="subtitle2">Fund ID: {currFundID}</Typography>
+            <Typography variant="body1">Fund ID: {currFundID}</Typography>
           </Grid>
           <Grid item className="fundCardText">
-            <Typography variant="h6" inline="true">Balance: </Typography>
-            <Typography variant="h6" inline="true" color="secondary"> {'$' + currFund.amount + ' ' + currFund.currency} </Typography>
+            <Typography variant="body1" inline={true}>Balance: </Typography>
+            <Typography variant="body1" inline={true} color="secondary"> {'$' + currFund.amount + ' ' + currFund.currency} </Typography>
           </Grid>
           <Grid item className="fundCardText">
-            <Typography variant="h6">Current: {portion + '%'}</Typography>
+            <Typography variant="body1">Current: {portion + '%'}</Typography>
           </Grid>
           {this.state.setAllocationOn ? (
             <Grid item className="fundCardText">
-              <Typography variant="h6">Target: </Typography>
+              <Typography variant="body1">Target: </Typography>
               <TextField
                 id="outlined-number"
                 label="Number"
@@ -392,7 +432,7 @@ class Portfolio extends React.Component {
             </Grid>
           ) : (
               <Grid item className="fundCardText">
-                <Typography variant="h6">Target: {this.state.targets[index] + '%'}</Typography>
+                <Typography variant="body1">Target: {this.state.targets[index] + '%'}</Typography>
               </Grid>
             )}
         </Grid>
@@ -416,30 +456,36 @@ class Portfolio extends React.Component {
 
     return (
       <div className="dashboardContainer">
-        <div className="root">
-          <Grid container spacing={24}>
-            <Grid item xs={6}>
-              <Typography variant="h5" className="Portfolio Title">
-                Portfolio ID: {this.state.selectedPortfolio.id}
-              </Typography>
-            </Grid>
-            <Grid item xs={6}>
-              <Typography variant="h5" className="Customer Title">
-                Customer ID: {this.state.customerId}
-              </Typography>
-            </Grid>
+        <Grid container justify="flex-end" spacing={24}>
+          <Grid item xs={12}>
+            <TCard className="portfolioHeader">
+              <CardBody>
+                <Row>
+                  <Col xs={8} md={6}>
+                    <Typography gutterBottom variant="subtitle1" component="h2">
+                      Portfolio ID: {this.state.selectedPortfolio.id}
+                    </Typography>
+                  </Col>
+                  <Col xs={8} md={6}>
+                    <Typography gutterBottom variant="subtitle1" component="h2">
+                      Customer ID: {this.state.customerId}
+                    </Typography>
+                  </Col>
+                </Row>
+              </CardBody>
+            </TCard>         
             <Grid item xs={12}>
-              <Button variant="contained" onClick={this.handleBack} color="secondary" className="TOPBUTTON">
+              <Button variant="contained" onClick={this.handleBack} color="secondary" className="topButton">
                 Back
               </Button>
-              <Button variant="contained" onClick={this.handleSetAllocationClick} color="default" className="TOPBUTTON">
+              <Button variant="contained" onClick={this.handleSetAllocationClick} color="default" className="topButton">
                 Set Allocation
               </Button>
-              <Button variant="contained" onClick={this.handleRebalanceClick} color="default" className="TOPBUTTON">
+              <Button variant="contained" onClick={this.handleRebalanceClick} color="default" className="topButton">
                 Rebalance
               </Button>
             </Grid>            
-            <Grid item xs={12}>
+            <div xs={12} className="allowedDeviationClass">
             {this.state.setAllocationOn ? (
               <TextField
                 id="outlined-number"
@@ -451,32 +497,40 @@ class Portfolio extends React.Component {
                 InputLabelProps={{
                   shrink: true,
                 }}
+                InputProps={{
+                  endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                }}
                 margin="normal"
                 variant="outlined"
+                style={{width: 200}}
               />
             ):(
-              <Typography variant="h6" className="title">Allowed Deviation: {this.state.allowedDeviation}</Typography>
+              <Typography variant="subtitle1"  className="allowedDeviationText">
+                <AssessmentIcon fontSize="inherit" className="assessmentIcon"/>                
+                Allowed Deviation: {(this.state.allowedDeviation === null) ? ("NOT SET"):(this.state.allowedDeviation+"%")}
+              </Typography>              
             )}
-            </Grid>      
+            </div>      
             {this.state.funds.map(function(object, i){
-                return (                  
-                  <Grid item xs={12} key={i}>
-                    <Grid spacing={24} container direction="row">
-                    
-                    <Grid item xs={that.state.recommendOn ? 4 : 9}>
+                return (
+                  <div xs={12} key={i} className="fundsTable">                                  
+                  <Grid container justify="flex-start" direction="row" spacing={24} className="fundsRow">  
+                    <Grid item xs={that.state.recommendOn ? 5 : 9}>
                       {that.state.recommendOn? that.createMiniFund(i) : that.createFund(i)}
                     </Grid>
-                    <Grid item xs={3} className="donutCharts">
+                    <Grid item>
                       {that.createChart(i)}
                     </Grid>
-                    {that.state.recommendOn && that.createRecommendation(i)}
-                    </Grid>
+                    <Grid item>
+                      {that.state.recommendOn && that.createRecommendation(i)} 
+                    </Grid>              
                   </Grid>
+                  </div> 
                 );
             })}
             {this.state.setAllocationOn && (
               <Grid item xs={12}>
-                <Button onClick={this.saveAllocation} fullWidth={true} variant="contained" color="secondary" className="TOPBUTTON">
+                <Button onClick={this.saveAllocation} fullWidth={true} variant="contained" color="secondary" className="topButton">
                   SAVE
               </Button>
               </Grid>
@@ -484,10 +538,10 @@ class Portfolio extends React.Component {
             {this.state.recommendOn && (
               <Grid container spacing={24} className="bottomRow">
                 <Grid item>
-                  <Button onClick={this.saveAllocation} variant="contained" color="secondary" className="TOPBUTTON">
+                  <Button onClick={this.saveAllocation} variant="contained" color="secondary" className="topButton">
                     MODIFY
                   </Button>
-                  <Button onClick={this.executeRecommend} variant="contained" color="secondary" className="TOPBUTTON">
+                  <Button onClick={this.executeRecommend} variant="contained" color="secondary" className="topButton">
                     EXECUTE
                   </Button>
                 </Grid>
@@ -518,8 +572,8 @@ class Portfolio extends React.Component {
               />
             </Snackbar>
           </Grid>
-        </div>
-      </div>
+          </Grid>
+        </div>      
     );
   }
 }
