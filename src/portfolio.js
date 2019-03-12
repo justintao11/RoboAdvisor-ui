@@ -44,35 +44,57 @@ class Portfolio extends React.Component {
       toDashboard: false,
       setAllocationOn: false,
       recommendOn: false,
-      recommendationSet: true,
+      preferencesSet: true,
       funds: [],   
       fundBalances:{},     // dictionary of fundID:{balance, currency}    // 
       total: 1,             // total balance of all funds//
       targets: [],          // target % for each fund//
-      allowedDeviation: 5,  // max deviation for portfolio//
+      allowedDeviation: null,  // max deviation for portfolio//
       recommendations: [],  // list of recommendations//
       indexRec:{},         // index of current recommendation? (not sure)//
       warningOpen: false,   // warning bar if allocation != add to 100//
       errorMessage: "bla bla",     // warning bar error message//
       customerId: props.location.state.customerId,
       selectedPortfolioPreference: props.location.state.selectedPortfolioPreference,
-      selectedPortfolio: props.location.state.selectedPortfolio
+      selectedPortfolio: props.location.state.selectedPortfolio,
+      portfolioType: null,
+      allocatedFunds:{}
     }
 
     this.handleSetAllocationClick = this.handleSetAllocationClick.bind(this);
     this.handleRebalanceClick = this.handleRebalanceClick.bind(this);
     this.getRebalance = this.getRebalance.bind(this);
+    this.populatePrefs = this.populatePrefs.bind(this);
     //this.setAllowedDeviation = this.setAllowedDeviation.bind(this);
   }
 
   componentDidMount() {
     this.getFunds(this.state.customerId);
+    this.populatePrefs();    
   }
 
+  // Grab portfolio deviation & fund allocation if exists
+  populatePrefs(){
+    let prefs = this.state.selectedPortfolioPreference;
+    let allocations = {};
+    if (prefs !== null){
+      for (let i = 0; i < prefs.allocations.length; i++){
+        allocations[i] = prefs.allocations[i];
+      }
+      this.setState({
+        allowedDeviation: prefs.deviation,
+        preferencesSet: true,
+        portfolioType: prefs.type,
+        allocatedFunds: allocations
+      });
+    }
+    // TODO: else highlight set allocation button
+  }
 
+  // TODO: not fully set up
   getRebalance(selectedPortfolio, custID) {
     let options = {
-      url: 'http://fund-rebalancer.hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/'+selectedPortfolio+'/rebalance',      
+      url: "http://fund-rebalancer.hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/"+selectedPortfolio+"/rebalance",      
       method: 'GET',
       headers: {
         'x-custid': custID
@@ -99,7 +121,7 @@ class Portfolio extends React.Component {
         //   temp[i] = 20;
         // }
         this.setState({
-          recommendationSet: false,
+          //preferencesSet: false,
           //targets: temp
         });
         // console.log(response.statusCode);
@@ -130,17 +152,21 @@ class Portfolio extends React.Component {
   }
 
   handleRebalanceClick = (e) => {
-    if (this.state.recommendationSet){
+    if (this.state.preferencesSet && !this.state.recommendOn){
       this.getRebalance(this.state.selectedPortfolio.id, this.state.customerId);
       this.setState({
         recommendOn: true,
         setAllocationOn: false,
         warningOpen: false
       })
-    } else {
+    } else if (!this.state.preferencesSet && !this.state.recommendOn){
       this.setState({
         errorMessage: "Allocation has not been set",
         warningOpen: true
+      })
+    } else {
+      this.setState({
+        recommendOn: false
       })
     }
   }
@@ -174,7 +200,7 @@ class Portfolio extends React.Component {
         warningOpen: false,
         setAllocationOn: false,
         recommendOn: false,
-        recommendationSet: true
+        preferencesSet: true
       })
     }
     
@@ -228,7 +254,6 @@ class Portfolio extends React.Component {
       }
     });
   }
-
 
 
   createFund(index) {
@@ -481,8 +506,8 @@ class Portfolio extends React.Component {
               />
             ):(
               <Typography variant="subtitle1"  className="allowedDeviationText">
-                <AssessmentIcon fontsize="inherit" className="assessmentIcon"/>                
-                Allowed Deviation: {this.state.allowedDeviation}%
+                <AssessmentIcon fontSize="inherit" className="assessmentIcon"/>                
+                Allowed Deviation: {(this.state.allowedDeviation === null) ? ("NOT SET"):(this.state.allowedDeviation+"%")}
               </Typography>              
             )}
             </div>      
@@ -493,10 +518,10 @@ class Portfolio extends React.Component {
                     <Grid item xs={that.state.recommendOn ? 5 : 9}>
                       {that.state.recommendOn? that.createMiniFund(i) : that.createFund(i)}
                     </Grid>
-                    <Grid item xs={1.5} className="donutCharts">
+                    <Grid item>
                       {that.createChart(i)}
                     </Grid>
-                    <Grid item xs={5.5} >
+                    <Grid item>
                       {that.state.recommendOn && that.createRecommendation(i)} 
                     </Grid>              
                   </Grid>

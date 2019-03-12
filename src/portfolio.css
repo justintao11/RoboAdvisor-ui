@@ -13,11 +13,6 @@
 	margin-bottom: 4px;
 }
 
-.fundsRow{
-	align-content: center !important;
-	text-align: left !important;
-}
-
 .bottomRow{
 	justify-content: flex-end;
 }
@@ -35,7 +30,6 @@
 	height: 120px;
 	margin-top: 10px;
 	margin-bottom: 5px;
-
 }
 
 .sellButtonClass {
