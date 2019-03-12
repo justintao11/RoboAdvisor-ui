@@ -5,7 +5,7 @@ import {
   // CardHeader,
   CardBody,
   // CardFooter,
-  CardTitle,
+  // CardTitle,
   Row,
   Col
 } from "reactstrap";
@@ -29,9 +29,9 @@ import AssessmentIcon from '@material-ui/icons/AssessmentOutlined';
 import InputAdornment from '@material-ui/core/InputAdornment';
 
 
-import {
-  dashboardEmailStatisticsChart,
-} from "./variables/charts.jsx";
+// import {
+//   dashboardEmailStatisticsChart,
+// } from "./variables/charts.jsx";
 // import transitions from "@material-ui/core/styles/transitions";
 const request = require('request');
 
@@ -347,8 +347,8 @@ class Portfolio extends React.Component {
         <Doughnut
           key={index}
           data={graph}          
-          width="100"
-          height="120"
+          width={100}
+          height={120}
           options={{
             padding:"0px",
             responsive: false,
@@ -404,18 +404,18 @@ class Portfolio extends React.Component {
       <Paper className="fundCard">
         <Grid container direction="column" className="miniFundCard">
           <Grid item className="fundCardText">
-            <Typography variant="body">Fund ID: {currFundID}</Typography>
+            <Typography variant="body1">Fund ID: {currFundID}</Typography>
           </Grid>
           <Grid item className="fundCardText">
-            <Typography variant="body" inline="true">Balance: </Typography>
-            <Typography variant="body" inline="true" color="secondary"> {'$' + currFund.amount + ' ' + currFund.currency} </Typography>
+            <Typography variant="body1" inline={true}>Balance: </Typography>
+            <Typography variant="body1" inline={true} color="secondary"> {'$' + currFund.amount + ' ' + currFund.currency} </Typography>
           </Grid>
           <Grid item className="fundCardText">
-            <Typography variant="body">Current: {portion + '%'}</Typography>
+            <Typography variant="body1">Current: {portion + '%'}</Typography>
           </Grid>
           {this.state.setAllocationOn ? (
             <Grid item className="fundCardText">
-              <Typography variant="body">Target: </Typography>
+              <Typography variant="body1">Target: </Typography>
               <TextField
                 id="outlined-number"
                 label="Number"
@@ -432,7 +432,7 @@ class Portfolio extends React.Component {
             </Grid>
           ) : (
               <Grid item className="fundCardText">
-                <Typography variant="body">Target: {this.state.targets[index] + '%'}</Typography>
+                <Typography variant="body1">Target: {this.state.targets[index] + '%'}</Typography>
               </Grid>
             )}
         </Grid>
@@ -485,7 +485,7 @@ class Portfolio extends React.Component {
                 Rebalance
               </Button>
             </Grid>            
-            <div item xs={12} className="allowedDeviationClass">
+            <div xs={12} className="allowedDeviationClass">
             {this.state.setAllocationOn ? (
               <TextField
                 id="outlined-number"
@@ -513,8 +513,8 @@ class Portfolio extends React.Component {
             </div>      
             {this.state.funds.map(function(object, i){
                 return (
-                  <div className="fundsTable">                                  
-                  <Grid xs={12} container justify="flex-start" direction="row" spacing={24} className="fundsRow">  
+                  <div xs={12} key={i} className="fundsTable">                                  
+                  <Grid container justify="flex-start" direction="row" spacing={24} className="fundsRow">  
                     <Grid item xs={that.state.recommendOn ? 5 : 9}>
                       {that.state.recommendOn? that.createMiniFund(i) : that.createFund(i)}
                     </Grid>
