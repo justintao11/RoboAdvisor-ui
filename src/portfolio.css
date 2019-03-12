@@ -1,19 +1,78 @@
-.doughnutChart {
-
+.TOPBUTTON {
+	width: 160px;
+	margin-right: 10px !important;
 }
 
-.TOPBUTTON {
-	width: 120px;
-	margin-right: 20px !important;
+.bottomRow{
+	justify-content: flex-end;
+}
+
+.recommendCard {
+	padding-left:10px;
 }
 
 .fundCard {
-	height: 200px;
+	height: 120px;
+
 }
 
-.rellocationRow {
+
+.fundCardText{
+	
+	
+}
+
+.sellButtonClass {
+	width: 50px;
+}
+
+.donutCharts{
+	justify-content: center;
+	align-content: center;
+	align-items: center;
+}
+
+.miniFundCard{
+	padding-left:5px;
+	text-align: left;
+	
+	
+}
+
+.fundIDString {
+	padding-top: 20px;
+
+}
+
+.fundColumn {
+	display: flex;
+	flex-direction: row;
+	text-align: left;
+	align-items: left;
+}
+
+.percentColumn {
 	display: flex;
 	flex-direction: row;
 	text-align: center;
 	align-items: center;
 }
+
+/*.closeIcon {
+  fontSize: 20;
+}*/
+/*.Snackbar {
+	width: 120px;
+	background-color: "#FF0266";
+}
+.SnackbarContent {
+	background-color: "#FF0266";
+}
+.closeIcon {
+  opacity: 0.9;
+  marginRight: 20;
+}
+.message {
+  display: 'flex';
+  alignItems: 'center';
+}*/
