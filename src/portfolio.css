@@ -1,10 +1,25 @@
-.TOPBUTTON {
-	width: 160px;
+.portfolioHeader{
+	align-content: center;
+	margin-bottom:10px;
+}
+
+.topButton {
+	width: 200px;
 	margin-right: 10px !important;
+	margin-bottom: 10px !important;
+}
+
+.assessmentIcon{
+	margin-bottom: 4px;
 }
 
 .bottomRow{
 	justify-content: flex-end;
+}
+
+.allowedDeviationClass{
+	margin-top: 10px !important;
+	margin-bottom: 10px !important;
 }
 
 .recommendCard {
@@ -13,35 +28,23 @@
 
 .fundCard {
 	height: 120px;
-
-}
-
-
-.fundCardText{
-	
-	
+	margin-top: 10px;
+	margin-bottom: 5px;
 }
 
 .sellButtonClass {
 	width: 50px;
-}
+	margin-right: 10px !important;
 
-.donutCharts{
-	justify-content: center;
-	align-content: center;
-	align-items: center;
 }
 
 .miniFundCard{
 	padding-left:5px;
-	text-align: left;
-	
-	
+	text-align: left;	
 }
 
 .fundIDString {
 	padding-top: 20px;
-
 }
 
 .fundColumn {
@@ -57,6 +60,8 @@
 	text-align: center;
 	align-items: center;
 }
+
+
 
 /*.closeIcon {
   fontSize: 20;
