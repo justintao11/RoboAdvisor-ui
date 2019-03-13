@@ -30,7 +30,7 @@ import CloseIcon from '@material-ui/icons/Close';
 import ErrorIcon from '@material-ui/icons/Error';
 import AssessmentIcon from '@material-ui/icons/AssessmentOutlined';
 import InputAdornment from '@material-ui/core/InputAdornment';
-import { withStyles, withTheme } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core/styles';
 import './dashboard.js';
 
 
