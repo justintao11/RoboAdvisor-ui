@@ -237,10 +237,10 @@ class Dashboard extends React.Component {
   
       request(options, (error, response, body) => {
         if (!error && response.statusCode === 200) {
-          let info = JSON.parse(body)
-          portfolioPreferenceDict[portfolioId] = info
+          let info = JSON.parse(body);
+          portfolioPreferenceDict[portfolioId] = info;
         } else {
-          portfolioPreferenceDict[portfolioId] = null
+          portfolioPreferenceDict[portfolioId] = null;
           console.log(response.body);
         }
       });
