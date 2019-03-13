@@ -3,6 +3,7 @@
 	padding-right: 10%;
 	padding-top: 6rem;
 	height: 100vh;
+	min-width: 320px;
 }
 
 .header {

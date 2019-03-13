@@ -12,10 +12,13 @@ import {
 import {
   Doughnut
 } from "react-chartjs-2";
+import classNames from 'classnames';
 import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
+import ToggleButton from '@material-ui/lab/ToggleButton';
+import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
 import TextField from '@material-ui/core/TextField';
 import Snackbar from '@material-ui/core/Snackbar';
 import SnackbarContent from '@material-ui/core/SnackbarContent';
@@ -27,6 +30,7 @@ import CloseIcon from '@material-ui/icons/Close';
 import ErrorIcon from '@material-ui/icons/Error';
 import AssessmentIcon from '@material-ui/icons/AssessmentOutlined';
 import InputAdornment from '@material-ui/core/InputAdornment';
+import { withStyles, withTheme } from '@material-ui/core/styles';
 import './dashboard.js';
 
 
@@ -35,6 +39,26 @@ import './dashboard.js';
 // } from "./variables/charts.jsx";
 // import transitions from "@material-ui/core/styles/transitions";
 const request = require('request');
+const styles = {
+  button: {
+    background: 'linear-gradient(45deg, #f50057 30%, #f50057 100%)',
+    backgroundColor: '#f50057',
+    //borderRadius: 3,
+    //border: 1,
+    color: 'white',
+    //height: 42,
+    width: 200,
+    margin: '0px 10px',
+    //padding: '0px 0px',
+    //boxShadow: '0 3px 5px 2px rgba(245, 0 , 87, .3)',
+  },
+  buttonBlue: {
+    background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+    backgroundColor: '#21CBF3',
+    color: 'white' 
+    //boxShadow: '0 3px 5px 2px rgba(33, 203, 243, .3)',
+  },
+};
 
 
 class Portfolio extends React.Component {
@@ -47,11 +71,13 @@ class Portfolio extends React.Component {
       toDashboard: false,               // back to dashboard page
       allocationButtonClicked: false,   // Set Allocation button clicked status
       rebalanceButtonClicked: false,    // Rebalance button clicked status
-      preferencesSet: true,             // Preferences for portfolio exist in database
+      preferencesSet: false,             // Preferences for portfolio exist in database
       preferencesExist: false,          // Preferences currently retrieved
       funds: [],                // TODO: not sure 
       fundBalances: {},         // dictionary of fundID:{balance, currency}
       totalBalance: 0,          // totalBalance balance of all funds
+      allocationButtonColor: 'default',
+      rebalanceButtonColor: 'default',
 
       // {customerId:{}, id:{portfolio Id}, holdings:{}} 
       selectedPortfolio: props.location.state.selectedPortfolio,      
@@ -79,6 +105,8 @@ class Portfolio extends React.Component {
     this.handleCancelClick = this.handleCancelClick.bind(this);
     this.modifyRecommendation = this.modifyRecommendation.bind(this);
     this.executeRecommendation = this.executeRecommendation.bind(this);
+    this.handleAllocationButtonChange = this.handleAllocationButtonChange.bind(this);
+    this.handleRebalanceButtonChange = this.handleRebalanceButtonChange.bind(this);
     //this.setAllowedDeviation = this.setAllowedDeviation.bind(this);
   }
 
@@ -88,11 +116,9 @@ class Portfolio extends React.Component {
     this.populatePrefs();  
   }
 
-
   getCurrPortfolioPrefs(custId) {
     let currPortfolioPref;    
     let portfolioId = this.state.portfolioId;
-
     let options = {
       url: "http://fund-rebalancer.hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/" + portfolioId,
       method: 'GET',
@@ -100,7 +126,6 @@ class Portfolio extends React.Component {
         'x-custid': custId
       }
     }
-
     request(options, (error, response, body) => {
       if (!error && response.statusCode === 200) {
         currPortfolioPref = JSON.parse(body); 
@@ -112,9 +137,7 @@ class Portfolio extends React.Component {
       this.setState({
         selectedPortfolioPreference: currPortfolioPref
       })
-    });    
-
-
+    }); 
   }
 
   // Grab portfolio deviation & fund allocation if exists
@@ -135,27 +158,121 @@ class Portfolio extends React.Component {
         preferencesSet: true,
         preferencesExist: true
       });
-
       
     } else {
     // TODO: else highlight set allocation button 
       this.setState({
         preferencesExist: false
       });
-    }
-    
+    }    
   }
 
-  // TODO: not fully set up
-  getRebalance(selectedPortfolio, custID) {
+  putCurrPortfolioPrefs(portfolioId, custID) {
+    let updatedPrefs = this.state.fundsTargets;
+
     let options = {
-      url: "http://fund-rebalancer.hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/"+selectedPortfolio+"/rebalance",      
-      method: 'GET',
+      url: "http://fund-rebalancer.hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/"+ portfolioId +"/allocations",      
+      method: 'PUT',
+      json: updatedPrefs,      
       headers: {
         'x-custid': custID
       }
-    }
+    }  
+    request(options, (error, response, body) => {
+      if (!error && response.statusCode === 200) {        
+        this.setState({
+          warningMessage: "Succesfully updated new preferences!",
+          warningOpen: true,
+          preferencesSet: true
+        });
+        
+      } else {
+        this.setState({
+          warningMessage: "Failed to update new preferences.",
+          warningOpen: true,
+        });
+      }
+    })
+  }
+
+  putCurrPortfolioDeviation (portfolioId, custID) {
+    let updatedDeviation = {
+      "deviation": this.state.allowedDeviation
+    };
+
+    let options = {
+      url: "http://fund-rebalancer.hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/"+ portfolioId +"/deviation",      
+      method: 'PUT',
+      json: updatedDeviation,      
+      headers: {
+        'x-custid': custID
+      }
+    }  
+    request(options, (error, response, body) => {
+      if (!error && response.statusCode === 200) {        
+        this.setState({
+          warningMessage: "Succesfully updated new deviation!",
+          warningOpen: true,
+          preferencesSet: true
+        });
+        
+      } else {
+        this.setState({
+          warningMessage: "Failed to update new deviation.",
+          warningOpen: true,
+        });
+      }
+    })
+  }
+
+  // TODO: might not be working, need more test cases
+  postCurrPortfolioPrefs(portfolioId, custID) {
+    let portfolioRequest = 
+      {
+        "allocations": this.state.fundsTargets,
+        "deviation": this.state.allowedDeviation,
+        "type": this.state.portfolioType
+      };
+    console.log("this is the post request obj "+portfolioRequest);
+    console.log(portfolioRequest.allocations);
+
+    let options = {
+      url: "http://fund-rebalancer.hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/"+ portfolioId,      
+      method: 'POST',
+      json: portfolioRequest,      
+      headers: {
+        'x-custid': custID
+      }
+    }  
+    request(options, (error, response, body) => {
+      if (!error && response.statusCode === 201) {        
+        this.setState({
+          warningMessage: "Succesfully posted new preferences!",
+          warningOpen: true,
+          preferencesSet: true
+
+        });
+        
+      } else {
+        this.setState({
+          warningMessage: "Failed to post new preferences.",
+          warningOpen: true,
+          preferencesSet: false
+        });
+        console.log(custID);
+        console.log(portfolioId);
+      }
+    })
+  }
   
+  getRebalance(portfolioId, custID) {
+    let options = {
+      url: "http://fund-rebalancer.hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/"+portfolioId+"/rebalance",      
+      method: 'POST',
+      headers: {
+        'x-custid': custID
+      }
+    }  
     request(options, (error, response, body) => {
       if (!error && response.statusCode === 200) {
         let trans = JSON.parse(body)
@@ -171,21 +288,19 @@ class Portfolio extends React.Component {
         });
         
       } else {
-        // let temp = [];
-        // for (let i = 0; i < this.state.funds.length; i++){
-        //   temp[i] = 20;
-        // }
         this.setState({
           //preferencesSet: false,
           //targets: temp
         });
-        // console.log(response.statusCode);
+        console.log(response.statusCode);
         console.log(custID);
-        console.log(selectedPortfolio);
+        console.log(portfolioId);
       }
     })
-    }
+  }
 
+  // TODO: currently there is a bug since deviation / target % are saved
+  // upon typing. You can enter 500% and cancel and it will still save to state.
   handleDeviationChange = (e) => {
     this.setState({
       allowedDeviation: Number(e.target.value),
@@ -194,24 +309,52 @@ class Portfolio extends React.Component {
 
   handleTargetChange = index => event => {
     let fundsTargets = this.state.fundsTargets;
-    fundsTargets[index].percentage = Number(event.target.value);
-    //console.log("hello" + fundsTargets[index].percentage);
+    let funds = this.state.funds;
+
+    // if Allocation not availble, prepopulate target array
+    if (!this.state.preferencesExist) {
+      for (let i = 0; i < funds.length; i++){
+        fundsTargets.push({"fundId" : funds[i].fundId, "percentage": 0});
+      }
+    }
+    fundsTargets[index].percentage = Number(event.target.value);    
+
     this.setState({
-      fundsTargets: fundsTargets
+      fundsTargets: fundsTargets,
+      preferencesExist: true
     });
-    //console.log("current standing" + this.state.fundsTargets);
-    // let targets = this.state.targets;
-    // targets[index] = Number(event.target.value);
-    // this.setState({
-    //   targets: targets
-    // });
-  };
+  }
+
+  // TODO: able to modify recommendations
+  handleRecommendationChange = index => event => {
+
+  }
+
+  handleAllocationButtonChange = (e) => {
+    this.setState({ 
+      allocationButtonColor: this.state.allocationButtonClicked ? 'blue' : 'default' });
+  }
+
+
+  handleRebalanceButtonChange = (e) => {
+    this.setState({ 
+      rebalanceButtonColor: this.state.rebalanceButtonClicked ? 'blue' : 'default' });
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (this.state.allocationButtonClicked !== prevState.allocationButtonClicked) {
+      this.handleAllocationButtonChange();      
+    }
+    if (this.state.rebalanceButtonClicked !== prevState.rebalanceButtonClicked){
+      this.handleRebalanceButtonChange();
+    }    
+  }
 
   handleSetAllocationClick = (e) => {
     if (!this.state.rebalanceButtonClicked){
       this.setState({
         allocationButtonClicked: true,
-        rebalanceButtonClicked: false
+        rebalanceButtonClicked: false,        
       })
     }
   }
@@ -232,9 +375,7 @@ class Portfolio extends React.Component {
         warningOpen: true
       })
     } else {
-      this.setState({
-        rebalanceButtonClicked: false
-      })
+
     }
   }
 
@@ -264,7 +405,7 @@ class Portfolio extends React.Component {
     } 
     console.log(sum);
 
-    if(dev < 0 || dev > 5){
+    if(dev < 0 || dev > 5 || dev === undefined || dev === null){
       this.setState({
         warningMessage: "Deviation must be between 0-5%",
         warningOpen: true
@@ -275,11 +416,17 @@ class Portfolio extends React.Component {
         warningOpen: true
       })
     } else {
+      if (!this.state.preferencesSet){
+        this.postCurrPortfolioPrefs(this.state.portfolioId, this.state.customerId);
+      } else {
+        this.putCurrPortfolioPrefs(this.state.portfolioId, this.state.customerId);
+        this.putCurrPortfolioDeviation(this.state.portfolioId, this.state.customerId);
+      }
+
       this.setState({
         warningOpen: false,
         allocationButtonClicked: false,
         rebalanceButtonClicked: false,
-        preferencesSet: true,
         preferencesExist: true,
         fundsTargets: fundsTargets
       })
@@ -312,7 +459,6 @@ class Portfolio extends React.Component {
         'x-custid': custId
       }
     }
-
     request(options, (error, response, body) => {
       if (!error && response.statusCode === 200) {
         let info = JSON.parse(body);
@@ -363,8 +509,7 @@ class Portfolio extends React.Component {
 
           <Grid item>
             <TextField
-            disabled
-            id="filled-disabled"
+            disabled id="filled-disabled"
             defaultValue={portion}
             className="textField"
             margin="normal"
@@ -454,25 +599,36 @@ class Portfolio extends React.Component {
           <Typography variant="subtitle1">Recommendation:</Typography>
           <Grid item container direction="row" className="recommendCard">
             <Grid item className="percentColumn">
-              <Button variant="contained" color="default" className="sellButtonClass">
+            {/* TODO: fix up buy sell buttons */}
+            <ToggleButtonGroup>
+              <ToggleButton value="BUY">
+                BUY
+              </ToggleButton>
+                <ToggleButton value="SELL">
+                SELL
+              </ToggleButton>
+            </ToggleButtonGroup>
+              {/* <Button variant="contained" color="default" className="sellButtonClass">
                 Sell
               </Button>
             </Grid>
             <Grid item className="percentColumn">
               <Button variant="contained" color="secondary" className="sellButtonClass">
                 Buy
-              </Button>
+              </Button> */}
             </Grid>
             <Grid item className="percentColumn">
             <TextField
-              id="outlined-number"
+              disabled id="filled-disabled"
+              //id="outlined-number"
               label="Units"
               value = {this.state.indexRec[this.state.funds[index].fundId]}
-              //onChange={this.handleTargetChange('bundb')}
+              onChange={this.handleRecommendationChange(index)}
               type="number"
               className="textField"
               margin="normal"
               variant="outlined"
+              InputLabelProps={{ shrink: true }} 
               style = {{width: 100}}
             />
             </Grid>
@@ -502,6 +658,7 @@ class Portfolio extends React.Component {
 
 
   render() {
+    const { classes } = this.props;
     if (this.state.toDashboard === true) {
       return <Redirect to= {
         {
@@ -536,14 +693,27 @@ class Portfolio extends React.Component {
               </CardBody>
             </TCard>         
             <Grid item xs={12}>
-              <Button variant="contained" onClick={this.handleBack} color="secondary" className="topButton">
+              <Button variant="contained" onClick={this.handleBack} color="default" className="topButton">
                 Back
               </Button>
-              <Button variant="contained" onClick={this.handleSetAllocationClick} color="default" className="topButton">
+              {/* <Button variant="contained" onClick={this.handleSetAllocationClick} color="default" className="topButton">
                 Set Allocation
+              </Button> */}
+              <Button
+                variant="contained"
+                className={classNames(classes.button, {
+                [classes.buttonBlue]: this.state.allocationButtonColor === 'blue',
+                })}
+                onClick={this.handleSetAllocationClick}>
+              {!this.state.preferencesSet ? 'SET ALLOCATION':'UPDATE ALLOCATION'}
               </Button>
-              <Button variant="contained" onClick={this.handleRebalanceClick} color="default" className="topButton">
-                Rebalance
+              <Button
+                variant="contained"
+                className={classNames(classes.button, {
+                [classes.buttonBlue]: this.state.rebalanceButtonColor === 'blue',
+                })}
+                onClick={this.handleRebalanceClick}>
+              {'REBALANCE'}
               </Button>
             </Grid>            
             <div xs={12} className="allowedDeviationClass">
@@ -649,4 +819,4 @@ class Portfolio extends React.Component {
   }
 }
 
-export default Portfolio;
+export default withStyles(styles)(Portfolio);
