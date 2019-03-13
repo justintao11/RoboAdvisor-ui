@@ -27,6 +27,7 @@ import CloseIcon from '@material-ui/icons/Close';
 import ErrorIcon from '@material-ui/icons/Error';
 import AssessmentIcon from '@material-ui/icons/AssessmentOutlined';
 import InputAdornment from '@material-ui/core/InputAdornment';
+import './dashboard.js';
 
 
 // import {
@@ -40,55 +41,109 @@ class Portfolio extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      selected: null,       // not being used right now//
-      toDashboard: false,
-      setAllocationOn: false,
-      recommendOn: false,
-      preferencesSet: true,
-      funds: [],   
-      fundBalances:{},     // dictionary of fundID:{balance, currency}    // 
-      total: 1,             // total balance of all funds//
-      targets: [],          // target % for each fund//
-      allowedDeviation: null,  // max deviation for portfolio//
-      recommendations: [],  // list of recommendations//
-      indexRec:{},         // index of current recommendation? (not sure)//
-      warningOpen: false,   // warning bar if allocation != add to 100//
-      errorMessage: "bla bla",     // warning bar error message//
       customerId: props.location.state.customerId,
+      portfolioId: props.location.state.selectedPortfolio.id,
+      selected: null,                   // not being used right now
+      toDashboard: false,               // back to dashboard page
+      allocationButtonClicked: false,   // Set Allocation button clicked status
+      rebalanceButtonClicked: false,    // Rebalance button clicked status
+      preferencesSet: true,             // Preferences for portfolio exist in database
+      preferencesExist: false,          // Preferences currently retrieved
+      funds: [],                // TODO: not sure 
+      fundBalances: {},         // dictionary of fundID:{balance, currency}
+      totalBalance: 0,          // totalBalance balance of all funds
+
+      // {customerId:{}, id:{portfolio Id}, holdings:{}} 
+      selectedPortfolio: props.location.state.selectedPortfolio,      
+      // {portfolioId:{}, deviation:{}, portfolioType:{}, allocations:{fundId:{},percentage:{}}}
       selectedPortfolioPreference: props.location.state.selectedPortfolioPreference,
-      selectedPortfolio: props.location.state.selectedPortfolio,
-      portfolioType: null,
-      allocatedFunds:{}
+
+      allowedDeviation: null,   // current max deviation for portfolio
+      portfolioType: null,      // current portfolioType
+      fundsTargets: [],         // array of {fundid/percentage} {0:{fundId:{},percentage:{}}, 1:{}...}
+
+      targets: [],              // target % for each fund
+      recommendations: [],      // list of recommendations
+      indexRec: {},             // index of current recommendation? (not sure)
+      warningOpen: false,       // warning bar 
+      warningMessage: ""        // warning bar error message
     }
 
     this.handleSetAllocationClick = this.handleSetAllocationClick.bind(this);
     this.handleRebalanceClick = this.handleRebalanceClick.bind(this);
     this.getRebalance = this.getRebalance.bind(this);
     this.populatePrefs = this.populatePrefs.bind(this);
+    //this.getCurrPortfolioPrefs = this.getCurrPortfolioPrefs.bind(this);
+    this.handleTargetChange = this.handleTargetChange.bind(this);
+    this.saveAllocation = this.saveAllocation.bind(this);
+    this.handleCancelClick = this.handleCancelClick.bind(this);
+    this.modifyRecommendation = this.modifyRecommendation.bind(this);
+    this.executeRecommendation = this.executeRecommendation.bind(this);
     //this.setAllowedDeviation = this.setAllowedDeviation.bind(this);
   }
 
   componentDidMount() {
     this.getFunds(this.state.customerId);
-    this.populatePrefs();    
+    this.getCurrPortfolioPrefs(this.state.customerId);
+    this.populatePrefs();  
+  }
+
+
+  getCurrPortfolioPrefs(custId) {
+    let currPortfolioPref;    
+    let portfolioId = this.state.portfolioId;
+
+    let options = {
+      url: "http://fund-rebalancer.hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/" + portfolioId,
+      method: 'GET',
+      headers: {
+        'x-custid': custId
+      }
+    }
+
+    request(options, (error, response, body) => {
+      if (!error && response.statusCode === 200) {
+        currPortfolioPref = JSON.parse(body); 
+        console.log(body);       
+      } else {
+        currPortfolioPref = null;
+      }
+
+      this.setState({
+        selectedPortfolioPreference: currPortfolioPref
+      })
+    });    
+
+
   }
 
   // Grab portfolio deviation & fund allocation if exists
   populatePrefs(){
     let prefs = this.state.selectedPortfolioPreference;
-    let allocations = {};
     if (prefs !== null){
+
+      let fundsTargets = [];
+
       for (let i = 0; i < prefs.allocations.length; i++){
-        allocations[i] = prefs.allocations[i];
+        fundsTargets.push(prefs.allocations[i]);
       }
+
       this.setState({
         allowedDeviation: prefs.deviation,
-        preferencesSet: true,
         portfolioType: prefs.type,
-        allocatedFunds: allocations
+        fundsTargets: fundsTargets,
+        preferencesSet: true,
+        preferencesExist: true
+      });
+
+      
+    } else {
+    // TODO: else highlight set allocation button 
+      this.setState({
+        preferencesExist: false
       });
     }
-    // TODO: else highlight set allocation button
+    
   }
 
   // TODO: not fully set up
@@ -138,35 +193,47 @@ class Portfolio extends React.Component {
   }
 
   handleTargetChange = index => event => {
-    let targets = this.state.targets;
-    targets[index] = Number(event.target.value);
+    let fundsTargets = this.state.fundsTargets;
+    fundsTargets[index].percentage = Number(event.target.value);
+    //console.log("hello" + fundsTargets[index].percentage);
     this.setState({
-      targets: targets
+      fundsTargets: fundsTargets
     });
+    //console.log("current standing" + this.state.fundsTargets);
+    // let targets = this.state.targets;
+    // targets[index] = Number(event.target.value);
+    // this.setState({
+    //   targets: targets
+    // });
   };
 
   handleSetAllocationClick = (e) => {
-    this.setState({
-      setAllocationOn: true
-    })
+    if (!this.state.rebalanceButtonClicked){
+      this.setState({
+        allocationButtonClicked: true,
+        rebalanceButtonClicked: false
+      })
+    }
   }
 
   handleRebalanceClick = (e) => {
-    if (this.state.preferencesSet && !this.state.recommendOn){
-      this.getRebalance(this.state.selectedPortfolio.id, this.state.customerId);
+    if (this.state.allocationButtonClicked){
+
+    } else if (this.state.preferencesSet && this.state.preferencesExist && !this.state.rebalanceButtonClicked){
+      this.getRebalance(this.state.portfolioId, this.state.customerId);
       this.setState({
-        recommendOn: true,
-        setAllocationOn: false,
+        rebalanceButtonClicked: true,
+        allocationButtonClicked: false,
         warningOpen: false
       })
-    } else if (!this.state.preferencesSet && !this.state.recommendOn){
+    } else if (!this.state.preferencesSet && !this.state.rebalanceButtonClicked){
       this.setState({
-        errorMessage: "Allocation has not been set",
+        warningMessage: "Allocation has not been set",
         warningOpen: true
       })
     } else {
       this.setState({
-        recommendOn: false
+        rebalanceButtonClicked: false
       })
     }
   }
@@ -177,30 +244,44 @@ class Portfolio extends React.Component {
     })
   }
 
+  handleCancelClick = (e) => {
+    this.setState({
+      allocationButtonClicked: false,
+      rebalanceButtonClicked: false
+    })
+  }
+
   saveAllocation = (e) => {
     let sum = 0;
     let dev = this.state.allowedDeviation;
-    if (this.state.targets.length > 0){
-      sum = this.state.targets.reduce((partial_sum, a) => partial_sum + a);
+    let fundsTargets = this.state.fundsTargets;
+
+    if (fundsTargets.length > 0){
+      for (let i = 0; i < fundsTargets.length; i++){
+        sum += fundsTargets[i].percentage;
+      }
+      //sum = this.state.targets.reduce((partial_sum, a) => partial_sum + a);
     } 
     console.log(sum);
 
     if(dev < 0 || dev > 5){
       this.setState({
-        errorMessage: "Deviation must be between 0-5%",
+        warningMessage: "Deviation must be between 0-5%",
         warningOpen: true
       })
     } else if(sum !== 100) {
       this.setState({
-        errorMessage: "Target does not add up to 100",
+        warningMessage: "Target does not add up to 100",
         warningOpen: true
       })
     } else {
       this.setState({
         warningOpen: false,
-        setAllocationOn: false,
-        recommendOn: false,
-        preferencesSet: true
+        allocationButtonClicked: false,
+        rebalanceButtonClicked: false,
+        preferencesSet: true,
+        preferencesExist: true,
+        fundsTargets: fundsTargets
       })
     }
     
@@ -212,10 +293,15 @@ class Portfolio extends React.Component {
     })
   }
 
-  executeRecommend = (e) => {
-    this.setState({
-      recommendOn: false
-    })
+  modifyRecommendation = (e) => {
+    // this.setState({
+     
+    // })
+  }
+  executeRecommendation = (e) => {
+    // this.setState({
+     
+    // })
   }
 
   getFunds(custId) {
@@ -234,7 +320,7 @@ class Portfolio extends React.Component {
         let tempFunds;
         let tempFundBalances = new Map();
         for (let i = 0; i<info.length; i++) {
-          if(info[i].id === this.state.selectedPortfolio.id) {
+          if(info[i].id === this.state.portfolioId) {
             tempFunds = info[i].holdings;
           }
         }
@@ -246,7 +332,7 @@ class Portfolio extends React.Component {
         this.setState({
           funds: tempFunds,
           fundBalances: tempFundBalances,
-          total: tempTotal
+          totalBalance: tempTotal
         });
       } else {
         console.log("getPortfolioList res code: " + response.statusCode)
@@ -257,7 +343,7 @@ class Portfolio extends React.Component {
 
 
   createFund(index) {
-    let portion = Math.round(this.state.funds[index].balance.amount * 100 / this.state.total);
+    let portion = Math.round(this.state.funds[index].balance.amount * 100 / this.state.totalBalance);
     return (      
       <Paper className="fundCard"> 
         <Grid container direction="row">
@@ -287,7 +373,7 @@ class Portfolio extends React.Component {
             />
           </Grid>
         </Grid> 
-        {this.state.setAllocationOn ? (
+        {this.state.allocationButtonClicked ? (
           <Grid item xs = {4} container direction="column" className="percentColumn">
           <Grid item>
             <Typography variant="subtitle1" >Target </Typography>
@@ -295,7 +381,7 @@ class Portfolio extends React.Component {
             <TextField
               id="outlined-number"
               label="%"
-              value={this.state.targets[index]}
+              value={(!this.state.preferencesExist) ? (0):(this.state.fundsTargets[index].percentage)}
               onChange={this.handleTargetChange(index)}
               type="number"
               className="textField"       
@@ -313,7 +399,7 @@ class Portfolio extends React.Component {
             <TextField
               disabled
               id="filled-disabled"
-              defaultValue={this.state.targets[index]}
+              value={(!this.state.preferencesExist) ? ("N/A"):(this.state.fundsTargets[index].percentage)}
               className="textField"
               margin="normal"
               variant="outlined"              
@@ -327,7 +413,7 @@ class Portfolio extends React.Component {
     )}
 
   createChart(index) {
-    // let portion = Math.round(this.state.funds[index].balance.amount * 100 / this.state.total);
+    // let portion = Math.round(this.state.funds[index].balance.amount * 100 / this.state.totalBalance);
     let graph = {
       datasets: [{
         data: [],
@@ -338,7 +424,7 @@ class Portfolio extends React.Component {
     let funds = this.state.funds;
     for(let i=0; i<funds.length; i++) {      
       graph.labels.push(this.state.funds[i].fundId);
-      graph.datasets[0].data.push(Math.round(this.state.funds[i].balance.amount * 100 / this.state.total));
+      graph.datasets[0].data.push(Math.round(this.state.funds[i].balance.amount * 100 / this.state.totalBalance));
       let color = (i === index) ? '#FF6384' : '#e0e0e0';
       graph.datasets[0].backgroundColor.push(color);
     }
@@ -396,47 +482,22 @@ class Portfolio extends React.Component {
   }
 
   createMiniFund(index) {
-    let portion = Math.round(this.state.funds[index].balance.amount * 100 / this.state.total);
+    let portion = Math.round(this.state.funds[index].balance.amount * 100 / this.state.totalBalance);
     let currFundID = this.state.funds[index].fundId;
     let currFund = this.state.fundBalances.get(currFundID);
     return (      
-        
-      <Paper className="fundCard">
-        <Grid container direction="column" className="miniFundCard">
-          <Grid item className="fundCardText">
-            <Typography variant="body1">Fund ID: {currFundID}</Typography>
+      
+        <Paper className="fundCard">
+          <Grid container direction="column" className="miniFundCard">
+              <Typography variant="body1">Fund ID: {currFundID}</Typography>
+              <Typography variant="body1" inline={true}>Balance: </Typography>
+              <Typography variant="body1" inline={true} color="secondary"> {'$' + currFund.amount + ' ' + currFund.currency} </Typography>
+              <Typography variant="body1">Current: {portion + '%'}</Typography>
+              <Typography variant="body1">Target: {this.state.fundsTargets[index].percentage + '%'}</Typography>
           </Grid>
-          <Grid item className="fundCardText">
-            <Typography variant="body1" inline={true}>Balance: </Typography>
-            <Typography variant="body1" inline={true} color="secondary"> {'$' + currFund.amount + ' ' + currFund.currency} </Typography>
-          </Grid>
-          <Grid item className="fundCardText">
-            <Typography variant="body1">Current: {portion + '%'}</Typography>
-          </Grid>
-          {this.state.setAllocationOn ? (
-            <Grid item className="fundCardText">
-              <Typography variant="body1">Target: </Typography>
-              <TextField
-                id="outlined-number"
-                label="Number"
-                value={this.state.targets[index]}
-                onChange={this.handleTargetChange(index)}
-                type="number"
-                className="textField"
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                margin="normal"
-                variant="outlined"
-              />
-            </Grid>
-          ) : (
-              <Grid item className="fundCardText">
-                <Typography variant="body1">Target: {this.state.targets[index] + '%'}</Typography>
-              </Grid>
-            )}
-        </Grid>
-      </Paper>)
+        </Paper>
+      
+      )
   }
 
 
@@ -463,7 +524,7 @@ class Portfolio extends React.Component {
                 <Row>
                   <Col xs={8} md={6}>
                     <Typography gutterBottom variant="subtitle1" component="h2">
-                      Portfolio ID: {this.state.selectedPortfolio.id}
+                      Portfolio ID: {this.state.portfolioId}
                     </Typography>
                   </Col>
                   <Col xs={8} md={6}>
@@ -486,7 +547,7 @@ class Portfolio extends React.Component {
               </Button>
             </Grid>            
             <div xs={12} className="allowedDeviationClass">
-            {this.state.setAllocationOn ? (
+            {this.state.allocationButtonClicked ? (
               <TextField
                 id="outlined-number"
                 label="Allowed Deviation"
@@ -507,42 +568,52 @@ class Portfolio extends React.Component {
             ):(
               <Typography variant="subtitle1"  className="allowedDeviationText">
                 <AssessmentIcon fontSize="inherit" className="assessmentIcon"/>                
-                Allowed Deviation: {(this.state.allowedDeviation === null) ? ("NOT SET"):(this.state.allowedDeviation+"%")}
+                Allowed Deviation: {(this.state.allowedDeviation === null || this.state.allowedDeviation === undefined ) ?
+                   ("NOT SET"):(this.state.allowedDeviation+"%")}
               </Typography>              
             )}
             </div>      
             {this.state.funds.map(function(object, i){
                 return (
-                  <div xs={12} key={i} className="fundsTable">                                  
+                  <div xs={12} key={i} className="fundsTable">    
+                                            
                   <Grid container justify="flex-start" direction="row" spacing={24} className="fundsRow">  
-                    <Grid item xs={that.state.recommendOn ? 5 : 9}>
-                      {that.state.recommendOn? that.createMiniFund(i) : that.createFund(i)}
+                    <Grid item xs={that.state.rebalanceButtonClicked ? 5 : 9}>
+                      {that.state.rebalanceButtonClicked? that.createMiniFund(i) : that.createFund(i)}
                     </Grid>
                     <Grid item>
                       {that.createChart(i)}
                     </Grid>
                     <Grid item>
-                      {that.state.recommendOn && that.createRecommendation(i)} 
+                      {that.state.rebalanceButtonClicked && that.createRecommendation(i)} 
                     </Grid>              
                   </Grid>
                   </div> 
                 );
             })}
-            {this.state.setAllocationOn && (
-              <Grid item xs={12}>
-                <Button onClick={this.saveAllocation} fullWidth={true} variant="contained" color="secondary" className="topButton">
-                  SAVE
-              </Button>
-              </Grid>
-            )}
-            {this.state.recommendOn && (
+            {this.state.allocationButtonClicked && (
               <Grid container spacing={24} className="bottomRow">
                 <Grid item>
-                  <Button onClick={this.saveAllocation} variant="contained" color="secondary" className="topButton">
+                <Button onClick={this.saveAllocation} variant="contained" color="secondary" className="topButton">
+                  SAVE
+                </Button>
+                <Button onClick={this.handleCancelClick} variant="contained" color="default" className="topButton">
+                  CANCEL
+                </Button>
+                </Grid>
+              </Grid>
+            )}
+            {this.state.rebalanceButtonClicked && (
+              <Grid container spacing={24} className="bottomRow">
+                <Grid item>
+                  <Button onClick={this.modifyRecommendation} variant="contained" color="secondary" className="topButton">
                     MODIFY
                   </Button>
-                  <Button onClick={this.executeRecommend} variant="contained" color="secondary" className="topButton">
+                  <Button onClick={this.executeRecommendation} variant="contained" color="secondary" className="topButton">
                     EXECUTE
+                  </Button>
+                  <Button onClick={this.handleCancelClick} variant="contained" color="default" className="topButton">
+                    CANCEL
                   </Button>
                 </Grid>
               </Grid>
@@ -558,7 +629,7 @@ class Portfolio extends React.Component {
                 message={
                   <span id="client-snackbar" className="message">
                     <ErrorIcon className="icon" />
-                    {this.state.errorMessage}
+                    {this.state.warningMessage}
                   </span>
                 }
                 action={[
