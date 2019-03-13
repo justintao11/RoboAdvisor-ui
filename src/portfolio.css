@@ -5,8 +5,9 @@
 
 .topButton {
 	width: 200px;
+	margin-left: 10px !important;
 	margin-right: 10px !important;
-	margin-bottom: 10px !important;
+	
 }
 
 .assessmentIcon{
@@ -18,7 +19,8 @@
 }
 
 .allowedDeviationClass{
-	margin-top: 10px !important;
+	margin-top: 15px !important;
+	margin-left: 10px !important;
 	margin-bottom: 10px !important;
 }
 
