@@ -137,7 +137,7 @@ class Portfolio extends React.Component {
     let currPortfolioPref;    
     let portfolioId = this.state.portfolioId;
     let options = {
-      url: "http://fund-rebalancer.hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/" + portfolioId,
+      url: "https://fund-rebalancer.hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/" + portfolioId,
       method: 'GET',
       headers: {
         'x-custid': custId
@@ -189,7 +189,7 @@ class Portfolio extends React.Component {
     let updatedPrefs = this.state.fundsTargets;
 
     let options = {
-      url: "http://fund-rebalancer.hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/"+ portfolioId +"/allocations",      
+      url: "https://fund-rebalancer.hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/"+ portfolioId +"/allocations",      
       method: 'PUT',
       json: updatedPrefs,      
       headers: {
@@ -219,7 +219,7 @@ class Portfolio extends React.Component {
     };
 
     let options = {
-      url: "http://fund-rebalancer.hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/"+ portfolioId +"/deviation",      
+      url: "https://fund-rebalancer.hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/"+ portfolioId +"/deviation",      
       method: 'PUT',
       json: updatedDeviation,      
       headers: {
@@ -256,7 +256,7 @@ class Portfolio extends React.Component {
     console.log(portfolioRequest.allocations);
 
     let options = {
-      url: "http://fund-rebalancer.hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/"+ portfolioId,      
+      url: "https://fund-rebalancer.hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/"+ portfolioId,      
       method: 'POST',
       json: portfolioRequest,      
       headers: {
@@ -286,7 +286,7 @@ class Portfolio extends React.Component {
   
   getRebalance(portfolioId, custID) {
     let options = {
-      url: "http://fund-rebalancer.hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/"+portfolioId+"/rebalance",      
+      url: "https://fund-rebalancer.hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/"+portfolioId+"/rebalance",      
       method: 'POST',
       headers: {
         'x-custid': custID
@@ -482,7 +482,7 @@ class Portfolio extends React.Component {
 
   postExecuteRecommendation(portfolioId, custId, recId) {
     let options = {
-      url: "http://fund-rebalancer.hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/"+portfolioId+"/recommendation/"+recId+"/execute",      
+      url: "https://fund-rebalancer.hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/"+portfolioId+"/recommendation/"+recId+"/execute",      
       method: 'POST',   
       headers: {
         'x-custid': custId
