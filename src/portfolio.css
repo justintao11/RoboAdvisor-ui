@@ -18,12 +18,18 @@
 	justify-content: flex-end;
 }
 
+.toggleButton:selected {
+	background-color: red;
+}
 .allowedDeviationClass{
 	margin-top: 15px !important;
 	margin-left: 10px !important;
 	margin-bottom: 10px !important;
 }
 
+.recommendationIdText{
+	margin-left: 20px !important;
+}
 .recommendCard {
 	padding-left:10px;
 }
