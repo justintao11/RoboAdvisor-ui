@@ -29,6 +29,7 @@ import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
 import ErrorIcon from '@material-ui/icons/Error';
 import AssessmentIcon from '@material-ui/icons/AssessmentOutlined';
+import BookmarkBorderIcon from '@material-ui/icons/BookmarkBorderOutlined';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import { withStyles } from '@material-ui/core/styles';
 import './dashboard.js';
@@ -39,7 +40,7 @@ import './dashboard.js';
 // } from "./variables/charts.jsx";
 // import transitions from "@material-ui/core/styles/transitions";
 const request = require('request');
-const styles = {
+const styles = theme => ({
   button: {
     background: 'linear-gradient(45deg, #f50057 30%, #f50057 100%)',
     backgroundColor: '#f50057',
@@ -58,7 +59,17 @@ const styles = {
     color: 'white' 
     //boxShadow: '0 3px 5px 2px rgba(33, 203, 243, .3)',
   },
-};
+  toggleContainer: {
+    height: 56,
+    padding: `${theme.spacing.unit}px ${theme.spacing.unit * 2}px`,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    margin: `${theme.spacing.unit}px 0`,
+    backgroundColor: 'white'
+    // background: theme.palette.background.default,
+  },
+});
 
 
 class Portfolio extends React.Component {
@@ -78,6 +89,8 @@ class Portfolio extends React.Component {
       totalBalance: 0,          // totalBalance balance of all funds
       allocationButtonColor: 'default',
       rebalanceButtonColor: 'default',
+      buyOrSell: 'BUY',
+
 
       // {customerId:{}, id:{portfolio Id}, holdings:{}} 
       selectedPortfolio: props.location.state.selectedPortfolio,      
@@ -89,8 +102,11 @@ class Portfolio extends React.Component {
       fundsTargets: [],         // array of {fundid/percentage} {0:{fundId:{},percentage:{}}, 1:{}...}
 
       targets: [],              // target % for each fund
-      recommendations: [],      // list of recommendations
-      indexRec: {},             // index of current recommendation? (not sure)
+      recommendationId: null,   // current recommendation ID
+      recommendations: [],      // list of recommendations [{"action": "sell", "fundID": , "units": }, {}]
+      recUnitsByFundId: {},     // fundId Index to Recommended Units (splitting this into 2 objects,
+                                //    since JS doesn't deal with setState of nested objects)
+      recActionByFundId: {},    // fundId Index to Recommended action 
       warningOpen: false,       // warning bar 
       warningMessage: ""        // warning bar error message
     }
@@ -103,11 +119,12 @@ class Portfolio extends React.Component {
     this.handleTargetChange = this.handleTargetChange.bind(this);
     this.saveAllocation = this.saveAllocation.bind(this);
     this.handleCancelClick = this.handleCancelClick.bind(this);
-    this.modifyRecommendation = this.modifyRecommendation.bind(this);
-    this.executeRecommendation = this.executeRecommendation.bind(this);
+    this.handleModifyRecClick = this.handleModifyRecClick.bind(this);
+    this.handleExecuteRecClick = this.handleExecuteRecClick.bind(this);
     this.handleAllocationButtonChange = this.handleAllocationButtonChange.bind(this);
     this.handleRebalanceButtonChange = this.handleRebalanceButtonChange.bind(this);
     //this.setAllowedDeviation = this.setAllowedDeviation.bind(this);
+    //var that = this;
   }
 
   componentDidMount() {
@@ -162,7 +179,8 @@ class Portfolio extends React.Component {
     } else {
     // TODO: else highlight set allocation button 
       this.setState({
-        preferencesExist: false
+        preferencesExist: false,
+        portfolioType: "fund"
       });
     }    
   }
@@ -227,13 +245,14 @@ class Portfolio extends React.Component {
 
   // TODO: might not be working, need more test cases
   postCurrPortfolioPrefs(portfolioId, custID) {
+    let allocationsClone = JSON.parse(JSON.stringify(this.state.fundsTargets));
     let portfolioRequest = 
       {
-        "allocations": this.state.fundsTargets,
+        "allocations": allocationsClone,
         "deviation": this.state.allowedDeviation,
         "type": this.state.portfolioType
       };
-    console.log("this is the post request obj "+portfolioRequest);
+    console.log("this is the post request obj "+ JSON.stringify(portfolioRequest));
     console.log(portfolioRequest.allocations);
 
     let options = {
@@ -276,15 +295,24 @@ class Portfolio extends React.Component {
     request(options, (error, response, body) => {
       if (!error && response.statusCode === 200) {
         let trans = JSON.parse(body)
-        let tempIndexRec = {};
+        let recUnitsByFundId = {};
+        let recActionByFundId = {};
+        let recommendationId = trans.recommendationId;
+        console.log("this is rec id" + recommendationId);
         for (let k = 0; k < trans.transactions.length; k++){
-          let index = trans.transactions[k].fundId;
-          let value = trans.transactions[k].units;
-          tempIndexRec[index] = value;
+          let fundId = trans.transactions[k].fundId;
+          let units = trans.transactions[k].units;
+          let action = trans.transactions[k].action;
+          recUnitsByFundId[fundId] = units;
+          recActionByFundId[fundId] = action;
+          // console.log("hi" + recUnitsByFundId[fundId].units);
+          // console.log("hi" + recUnitsByFundId[fundId].action);
         }
         this.setState({
+          recommendationId: recommendationId,
           recommendations: trans.transactions,
-          indexRec: tempIndexRec
+          recUnitsByFundId: recUnitsByFundId,
+          recActionByFundId: recActionByFundId
         });
         
       } else {
@@ -440,15 +468,45 @@ class Portfolio extends React.Component {
     })
   }
 
-  modifyRecommendation = (e) => {
+  handleModifyRecClick = (e) => {
     // this.setState({
      
     // })
   }
-  executeRecommendation = (e) => {
-    // this.setState({
-     
-    // })
+  handleExecuteRecClick = (e) => {
+    this.postExecuteRecommendation(this.state.portfolioId, this.state.customerId, this.state.recommendationId);
+    this.setState({
+      warningOpen: false
+    })
+  }
+
+  postExecuteRecommendation(portfolioId, custId, recId) {
+    let options = {
+      url: "http://fund-rebalancer.hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/"+portfolioId+"/recommendation/"+recId+"/execute",      
+      method: 'POST',   
+      headers: {
+        'x-custid': custId
+      }
+    }  
+    request(options, (error, response, body) => {
+      if (!error && response.statusCode === 200) {        
+        this.setState({
+          warningMessage: "Succesfully executed recommendation " + recId,
+          warningOpen: true,
+          rebalanceButtonClicked: false,
+          allocationButtonClicked: false
+        });
+        this.componentDidMount();
+        
+      } else {
+        this.setState({
+          warningMessage: "Failed to execute recommendation " + recId,
+          warningOpen: true,
+        });
+        console.log(custId);
+        console.log(portfolioId);
+      }
+    })
   }
 
   getFunds(custId) {
@@ -593,18 +651,27 @@ class Portfolio extends React.Component {
     )
   }
 
+  handleBuyOrSell = (event, buyOrSell) => {
+    this.setState({ buyOrSell });
+  }
+
   createRecommendation(index) {
+    const { classes } = this.props;
     return (      
         <Paper className="fundCard">
           <Typography variant="subtitle1">Recommendation:</Typography>
           <Grid item container direction="row" className="recommendCard">
             <Grid item className="percentColumn">
             {/* TODO: fix up buy sell buttons */}
-            <ToggleButtonGroup>
-              <ToggleButton value="BUY">
+            <div className={classes.toggleContainer}>
+            <ToggleButtonGroup 
+            value={this.state.recActionByFundId[this.state.funds[index].fundId] || ""} 
+            //exclusive onChange={this.handleBuyOrSell}
+            >
+              <ToggleButton value="buy">
                 BUY
               </ToggleButton>
-                <ToggleButton value="SELL">
+                <ToggleButton value="sell">
                 SELL
               </ToggleButton>
             </ToggleButtonGroup>
@@ -616,13 +683,15 @@ class Portfolio extends React.Component {
               <Button variant="contained" color="secondary" className="sellButtonClass">
                 Buy
               </Button> */}
+            </div>
             </Grid>
+            
             <Grid item className="percentColumn">
             <TextField
               disabled id="filled-disabled"
               //id="outlined-number"
               label="Units"
-              value = {this.state.indexRec[this.state.funds[index].fundId]}
+              value = {this.state.recUnitsByFundId[this.state.funds[index].fundId] || 0}
               onChange={this.handleRecommendationChange(index)}
               type="number"
               className="textField"
@@ -716,12 +785,13 @@ class Portfolio extends React.Component {
               {'REBALANCE'}
               </Button>
             </Grid>            
-            <div xs={12} className="allowedDeviationClass">
+            <div xs={6} lg={8} className="allowedDeviationClass">
+            <Grid container justify="flex-start">
             {this.state.allocationButtonClicked ? (
               <TextField
                 id="outlined-number"
                 label="Allowed Deviation"
-                value={this.state.allowedDeviation}
+                value={this.state.allowedDeviation || ""}
                 onChange={this.handleDeviationChange}
                 type="number"
                 className="textField"
@@ -742,7 +812,16 @@ class Portfolio extends React.Component {
                    ("NOT SET"):(this.state.allowedDeviation+"%")}
               </Typography>              
             )}
-            </div>      
+            {(this.state.recommendationId !== null && this.state.rebalanceButtonClicked) ? (
+              <Typography variant="subtitle1" inline={true} className="recommendationIdText">
+              <BookmarkBorderIcon fontSize="inherit" className="assessmentIcon"/>                
+              Recomendation ID: {this.state.recommendationId || "NOT AVAILABLE"}
+              </Typography> 
+            ):(
+              <Typography></Typography>  // false item
+            )}        
+            </Grid> 
+            </div>
             {this.state.funds.map(function(object, i){
                 return (
                   <div xs={12} key={i} className="fundsTable">    
@@ -776,10 +855,10 @@ class Portfolio extends React.Component {
             {this.state.rebalanceButtonClicked && (
               <Grid container spacing={24} className="bottomRow">
                 <Grid item>
-                  <Button onClick={this.modifyRecommendation} variant="contained" color="secondary" className="topButton">
+                  <Button onClick={this.handleModifyRecClick} variant="contained" color="secondary" className="topButton">
                     MODIFY
                   </Button>
-                  <Button onClick={this.executeRecommendation} variant="contained" color="secondary" className="topButton">
+                  <Button onClick={this.handleExecuteRecClick} variant="contained" color="secondary" className="topButton">
                     EXECUTE
                   </Button>
                   <Button onClick={this.handleCancelClick} variant="contained" color="default" className="topButton">
