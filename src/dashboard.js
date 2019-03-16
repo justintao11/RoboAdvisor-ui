@@ -79,12 +79,12 @@ class PortfolioIconsShown extends React.Component {
   render() {
     return (
       <div>
-        <IconButton aria-label="Rebalance" disabled={true} color="secondary">
+        {/* <IconButton aria-label="Rebalance" disabled={true} color="secondary">
           <AssessmentIcon />
         </IconButton>
         <IconButton aria-label="Tune" disabled={this.state.isPreferenceSet} color="secondary">
           <TuneIcon />
-        </IconButton>
+        </IconButton> */}
       </div>
     )
   }
@@ -312,7 +312,7 @@ class Dashboard extends React.Component {
           <Grid container justify="flex-end" spacing={16}>
             <Grid item xs={12}>
               <TCard className="card-stats">
-                <CardBody>
+                <CardBody >
                   <Row>
                     <Col xs={5} md={4}>
                       <div className="icon-big text-center">
@@ -323,7 +323,7 @@ class Dashboard extends React.Component {
                       <div className="numbers">
                         <p className="card-category">Total Assets</p>
                         <CardTitle tag="p">
-                          <Typography component="a">
+                          <Typography color="secondary" component="a">
                             ${this.state.totalAssets.toFixed(2)}
                           </Typography>
                         </CardTitle>

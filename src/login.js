@@ -4,6 +4,7 @@ import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
 import { Redirect } from 'react-router-dom';
+import Grid from '@material-ui/core/Grid';
 
 class Login extends React.Component {
   constructor(props) {
@@ -40,16 +41,18 @@ class Login extends React.Component {
     } else {
       return (
         <div className="loginContainer">
-          <div className="title">
-            <Typography component="h1" variant="h3" gutterBottom>
-              RoboAdvisor
-            </Typography>
-            <Typography component="h1" variant="h4" gutterBottom>
-              Portfolio Rebalancer Service
-            </Typography>
-          </div>
-          <div className="login">
-            <div>
+          <Grid container justify="flex-end" spacing={24}>          
+            <Grid item xs={12} className="title">
+              <Typography component="h1" variant="h3" gutterBottom>
+                RoboAdvisor
+              </Typography>
+              <Typography component="h1" variant="h4" gutterBottom>
+                Portfolio Rebalancer Service
+              </Typography>
+            </Grid>
+          </Grid>
+          <Grid container  justify="flex-end">
+            <Grid item xs={9} sm={6} className="login">            
               <TextField
                 placeholder="Enter Customer ID"
                 label="Customer ID"
@@ -58,17 +61,17 @@ class Login extends React.Component {
                 onChange={this.handleCustomerIdChange}
                 variant="outlined"
               />
-            </div>
-            <div>
+            </Grid>
+            <Grid item xs={9} className="login">
               <Button
                 className="login_button"
                 variant="contained"
                 onClick={this.handleLogin}
                 color="secondary">
                 Login
-            </Button>
-            </div>
-          </div>
+              </Button>
+            </Grid>
+          </Grid>
         </div>
       );
     }
