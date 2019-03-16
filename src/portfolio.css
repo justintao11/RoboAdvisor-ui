@@ -2,6 +2,9 @@
 	align-content: center;
 	margin-bottom:10px;
 }
+.portfolioHeader.card {	
+	background-color: #f8f9fa;	
+}
 
 .topButton {
 	width: 200px;
