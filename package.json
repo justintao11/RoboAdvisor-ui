@@ -11,6 +11,7 @@
     "chart.js": "^2.7.3",
     "jquery": "^3.3.1",
     "node-sass": "^4.11.0",
+    "notistack": "^0.5.1",
     "react": "^16.8.1",
     "react-bootstrap": "^0.32.4",
     "react-chartjs-2": "^2.7.4",

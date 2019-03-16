@@ -5,6 +5,17 @@ import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
 import { Redirect } from 'react-router-dom';
 import Grid from '@material-ui/core/Grid';
+import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
+
+const theme = createMuiTheme({
+  palette: {
+    primary: { main: '#EF241C' }, // This is HSBC red 
+    secondary: { main: '#404040' }, // This is dark gray 404040
+  },
+  typography: { 
+    useNextVariants: true, 
+    fontSize: 12,},
+});
 
 class Login extends React.Component {
   constructor(props) {
@@ -15,6 +26,7 @@ class Login extends React.Component {
     }
     this.handleLogin = this.handleLogin.bind(this);
     this.handleCustomerIdChange = this.handleCustomerIdChange.bind(this);
+    this.keyPress = this.keyPress.bind(this);
   }
 
   handleLogin() {
@@ -28,6 +40,12 @@ class Login extends React.Component {
       customerId: e.target.value
     })
   }
+
+  keyPress(e){
+    if(e.keyCode == 13){
+       this.handleLogin(); // enter key clicks login
+    }
+ }
 
   render() {
     if (this.state.toDashboard === true) {
@@ -52,8 +70,10 @@ class Login extends React.Component {
             </Grid>
           </Grid>
           <Grid container  justify="flex-end">
-            <Grid item xs={9} sm={6} className="login">            
+            <Grid item xs={9} sm={6} className="login"> 
+            <MuiThemeProvider theme={theme}>           
               <TextField
+                onKeyDown={this.keyPress} 
                 placeholder="Enter Customer ID"
                 label="Customer ID"
                 fullWidth={true}
@@ -61,15 +81,18 @@ class Login extends React.Component {
                 onChange={this.handleCustomerIdChange}
                 variant="outlined"
               />
+              </MuiThemeProvider>
             </Grid>
             <Grid item xs={9} className="login">
-              <Button
-                className="login_button"
-                variant="contained"
-                onClick={this.handleLogin}
-                color="secondary">
-                Login
-              </Button>
+              <MuiThemeProvider theme={theme}>
+                <Button
+                  className="login_button"
+                  variant="contained"
+                  onClick={this.handleLogin}
+                  color="primary">
+                  Login
+                </Button>
+              </MuiThemeProvider>
             </Grid>
           </Grid>
         </div>
