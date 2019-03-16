@@ -20,18 +20,20 @@ import Button from '@material-ui/core/Button';
 import ToggleButton from '@material-ui/lab/ToggleButton';
 import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
 import TextField from '@material-ui/core/TextField';
-import Snackbar from '@material-ui/core/Snackbar';
-import SnackbarContent from '@material-ui/core/SnackbarContent';
 // import WarningIcon from '@material-ui/icons/Warning';
+import PropTypes from 'prop-types';
 import './portfolio.css';
 import { Redirect } from 'react-router-dom';
-import IconButton from '@material-ui/core/IconButton';
+//import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
-import ErrorIcon from '@material-ui/icons/Error';
+//import ErrorIcon from '@material-ui/icons/Error';
+import { withSnackbar } from 'notistack';
 import AssessmentIcon from '@material-ui/icons/AssessmentOutlined';
 import BookmarkBorderIcon from '@material-ui/icons/BookmarkBorderOutlined';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import { withStyles } from '@material-ui/core/styles';
+import Slide from '@material-ui/core/Slide';
+import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import './dashboard.js';
 
 
@@ -40,15 +42,42 @@ import './dashboard.js';
 // } from "./variables/charts.jsx";
 // import transitions from "@material-ui/core/styles/transitions";
 const request = require('request');
+
+const colorTheme = createMuiTheme({
+  palette: {
+    primary: { main: '#EF241C' }, // This is HSBC red 
+    secondary: { main: '#404040' }, // This is dark gray 404040
+    error: { main: '#ffffff'}
+  },
+  typography: { 
+    useNextVariants: true,
+    fontSize: 12,
+    
+  },
+});
+
+const textfieldTheme = createMuiTheme({
+  palette: {
+    primary: { main: '#404040' }, 
+    secondary: { main: '#EF241C' }, 
+    error: { main: '#ffffff'}
+  },
+  typography: { 
+    useNextVariants: true,
+    fontSize: 12,
+    
+  },
+});
+
 const styles = theme => ({
   button: {
-    background: 'linear-gradient(45deg, #f50057 30%, #f50057 100%)',
-    backgroundColor: '#f50057',
+    background: 'linear-gradient(45deg, #EF241C 30%, #EF241C 100%)',
+    backgroundColor: '#EF241C',
     //borderRadius: 3,
     //border: 1,
     color: 'white',
     //height: 42,
-    width: 200,
+    width: 220,
     margin: '0px 10px',
     //padding: '0px 0px',
     //boxShadow: '0 3px 5px 2px rgba(245, 0 , 87, .3)',
@@ -56,6 +85,8 @@ const styles = theme => ({
   buttonBlue: {
     background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
     backgroundColor: '#21CBF3',
+    // background: 'linear-gradient(45deg, #404040 30%, #868686 90%)',
+    // backgroundColor: '#868686',
     color: 'white' 
     //boxShadow: '0 3px 5px 2px rgba(33, 203, 243, .3)',
   },
@@ -89,7 +120,9 @@ class Portfolio extends React.Component {
       totalBalance: 0,          // totalBalance balance of all funds
       allocationButtonColor: 'default',
       rebalanceButtonColor: 'default',
-      buyOrSell: 'BUY',      
+      buyOrSell: 'BUY',
+      checked: false,
+      loading: false,      
 
 
       // {customerId:{}, id:{portfolio Id}, holdings:{}} 
@@ -101,6 +134,7 @@ class Portfolio extends React.Component {
       displayDeviation: null,   // displayed deviation on UI
       portfolioType: null,      // current portfolioType
       fundsTargets: [],         // array of {fundid/percentage} {0:{fundId:{},percentage:{}}, 1:{}...}
+      displayTargets: [],       // displayed array of {fundid/percentage}
 
       targets: [],              // target % for each fund
       recommendationId: null,   // current recommendation ID
@@ -108,8 +142,8 @@ class Portfolio extends React.Component {
       recUnitsByFundId: {},     // fundId Index to Recommended Units (splitting this into 2 objects,
                                 //    since JS doesn't deal with setState of nested objects)
       recActionByFundId: {},    // fundId Index to Recommended action 
-      warningOpen: false,       // warning bar 
-      warningMessage: ""        // warning bar error message
+      // warningOpen: false,       // warning bar 
+      // warningMessage: ""        // warning bar error message
     }
 
     this.handleSetAllocationClick = this.handleSetAllocationClick.bind(this);
@@ -118,21 +152,29 @@ class Portfolio extends React.Component {
     this.populatePrefs = this.populatePrefs.bind(this);
     this.getCurrPortfolioPrefs = this.getCurrPortfolioPrefs.bind(this);
     this.handleTargetChange = this.handleTargetChange.bind(this);
-    this.saveAllocation = this.saveAllocation.bind(this);
+    this.handleSaveAllocation = this.handleSaveAllocation.bind(this);
     this.handleCancelClick = this.handleCancelClick.bind(this);
     this.handleModifyRecClick = this.handleModifyRecClick.bind(this);
     this.handleExecuteRecClick = this.handleExecuteRecClick.bind(this);
     this.handleAllocationButtonChange = this.handleAllocationButtonChange.bind(this);
     this.handleRebalanceButtonChange = this.handleRebalanceButtonChange.bind(this);
     this.getFunds = this.getFunds.bind(this);
+    this.handleTransitionSlide = this.handleTransitionSlide.bind(this);
+    this.handleSnackBarMessage = this.handleSnackBarMessage.bind(this);
+
+
   }
+
+
 
    componentDidMount() { 
     this.getFunds(this.state.customerId);
     this.getCurrPortfolioPrefs(this.state.customerId);
+    this.handleTransitionSlide();
   }
 
   getCurrPortfolioPrefs(custId) {
+    //console.log("getportfolio prefs ran")
     let currPortfolioPref;    
     let portfolioId = this.state.portfolioId;
     let options = {
@@ -162,17 +204,22 @@ class Portfolio extends React.Component {
     let prefs = this.state.selectedPortfolioPreference;
     if (prefs !== null){
 
-      let fundsTargets = [];
+      let fundsTargets = [];   
 
       for (let i = 0; i < prefs.allocations.length; i++){
         fundsTargets.push(prefs.allocations[i]);
       }
+
+      // MUST use deepcopy of fundsTargets here, or else when you mutate fundsTargets,
+      // displayTargets will change as well 
+      let displayTargets = JSON.parse(JSON.stringify(fundsTargets));  
 
       this.setState({
         allowedDeviation: prefs.deviation,
         displayDeviation: prefs.deviation,
         portfolioType: prefs.type,
         fundsTargets: fundsTargets,
+        displayTargets: displayTargets,
         preferencesSet: true,
         preferencesExist: true
       });
@@ -187,7 +234,8 @@ class Portfolio extends React.Component {
   }
 
   putCurrPortfolioPrefs(portfolioId, custID) {
-    let updatedPrefs = this.state.fundsTargets;
+    let updatedPrefs = this.state.displayTargets;
+    console.log("this is putpref call " + updatedPrefs[0].fundId + " and percentage " + updatedPrefs[0].percentage)
 
     let options = {
       url: "https://fund-rebalancer-dot-hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/"+ portfolioId +"/allocations",      
@@ -200,16 +248,18 @@ class Portfolio extends React.Component {
     request(options, (error, response, body) => {
       if (!error && response.statusCode === 200) {        
         this.setState({
-          warningMessage: "Succesfully updated new preferences!",
-          warningOpen: true,
+          // warningMessage: "Succesfully updated new preferences!",
+          // warningOpen: true,
           preferencesSet: true
         });
+        this.handleSnackBarMessage("Succesfully updated new preferences!", "success");
         
       } else {
-        this.setState({
-          warningMessage: "Failed to update new preferences.",
-          warningOpen: true,
-        });
+        // this.setState({
+        //   warningMessage: "Failed to update new preferences.",
+        //   warningOpen: true,
+        // });
+        this.handleSnackBarMessage("Failed to update new preferences", "error");
       }
     })
   }
@@ -230,17 +280,19 @@ class Portfolio extends React.Component {
     request(options, (error, response, body) => {
       if (!error && response.statusCode === 200) {        
         this.setState({
-          warningMessage: "Succesfully updated new deviation!",
-          warningOpen: true,
+          // warningMessage: "Succesfully updated new deviation!",
+          // warningOpen: true,
           preferencesSet: true,
           allowedDeviation: this.state.displayDeviation
         });
+        this.handleSnackBarMessage("Succesfully updated new deviation!", "success");
         
       } else {
-        this.setState({
-          warningMessage: "Failed to update new deviation.",
-          warningOpen: true,
-        });
+        // this.setState({
+        //   warningMessage: "Failed to update new deviation.",
+        //   warningOpen: true,
+        // });
+        this.handleSnackBarMessage("Failed to update new deviation", "error");
       }
     })
   }
@@ -254,6 +306,9 @@ class Portfolio extends React.Component {
         "deviation": this.state.displayDeviation,
         "type": this.state.portfolioType
       };
+    if (this.state.funds.length !== this.state.fundsTargets.length){
+      throw new Error ("Number of funds " + this.state.funds.length + "mismatch with number of target percents " + this.state.fundsTargets.length);
+    }
     console.log("this is the post request obj "+ JSON.stringify(portfolioRequest));
     console.log(portfolioRequest.allocations);
 
@@ -268,18 +323,21 @@ class Portfolio extends React.Component {
     request(options, (error, response, body) => {
       if (!error && response.statusCode === 201) {        
         this.setState({
-          warningMessage: "Succesfully posted new preferences!",
-          warningOpen: true,
+          // warningMessage: "Succesfully posted new preferences!",
+          // warningOpen: true,
           preferencesSet: true,
           allowedDeviation: this.state.displayDeviation
         });
+        this.handleSnackBarMessage("Succesfully posted new preferences!", "success");
         
       } else {
         this.setState({
-          warningMessage: "Failed to post new preferences.",
-          warningOpen: true,
+          // warningMessage: "Failed to post new preferences.",
+          // warningOpen: true,
           preferencesSet: false
         });
+        this.handleSnackBarMessage("Failed to post new preferences", "error");
+        
         console.log(custID);
         console.log(portfolioId);
       }
@@ -316,21 +374,20 @@ class Portfolio extends React.Component {
           recUnitsByFundId: recUnitsByFundId,
           recActionByFundId: recActionByFundId
         });
+        console.log("did i get run")
         
       } else {
         this.setState({
           //preferencesSet: false,
           //targets: temp
         });
-        console.log(response.statusCode);
+        console.log(response.statusCode);        
         console.log(custID);
         console.log(portfolioId);
       }
     })
   }
 
-  // TODO: currently there is a bug since deviation / target % are saved
-  // upon typing. You can enter 500% and cancel and it will still save to state.
   handleDeviationChange = (e) => {
     this.setState({
       displayDeviation: Number(e.target.value),
@@ -338,19 +395,23 @@ class Portfolio extends React.Component {
   }
 
   handleTargetChange = index => event => {
-    let fundsTargets = this.state.fundsTargets;
+    let displayTargets = this.state.displayTargets;
     let funds = this.state.funds;
 
-    // if Allocation not availble, prepopulate target array
+    // if Allocation not available, prepopulate target array
     if (!this.state.preferencesExist) {
       for (let i = 0; i < funds.length; i++){
-        fundsTargets.push({"fundId" : funds[i].fundId, "percentage": 0});
+        displayTargets.push({"fundId" : funds[i].fundId, "percentage": 0});
       }
     }
-    fundsTargets[index].percentage = Number(event.target.value);    
+    displayTargets[index].percentage = Number(event.target.value);    
+
+    console.log("current display targets length " + displayTargets.length)
+    console.log("Current display target for index " + index + "=" + displayTargets[index].percentage)
+    console.log("Current actual target for index " + index + "=" + this.state.fundsTargets[index].percentage)
 
     this.setState({
-      fundsTargets: fundsTargets,
+      //displayTargets: displayTargets,
       preferencesExist: true
     });
   }
@@ -377,19 +438,22 @@ class Portfolio extends React.Component {
     }
     if (this.state.rebalanceButtonClicked !== prevState.rebalanceButtonClicked){
       this.handleRebalanceButtonChange();
+      this.handleTransitionSlide();
     }    
   }
 
   handleSetAllocationClick = (e) => {
     if (!this.state.rebalanceButtonClicked){
+      let fundsTargets = JSON.parse(JSON.stringify(this.state.fundsTargets));
       this.setState({
         allocationButtonClicked: true,
         rebalanceButtonClicked: false,
-        displayDeviation: this.state.allowedDeviation        
+        displayDeviation: this.state.allowedDeviation,  
+        displayTargets: fundsTargets      
       })
     }
     if (this.state.allocationButtonClicked){
-      this.handleCancelClick();
+      this.handleCancelClick();      
     }
   }
 
@@ -403,13 +467,9 @@ class Portfolio extends React.Component {
       this.setState({
         rebalanceButtonClicked: true,
         allocationButtonClicked: false,
-        warningOpen: false
       })
     } else if (!this.state.preferencesSet && !this.state.rebalanceButtonClicked){
-      this.setState({
-        warningMessage: "Allocation has not been set",
-        warningOpen: true
-      })
+      this.handleSnackBarMessage("Allocation has not been set", "error");
     } else {
 
     }
@@ -424,43 +484,59 @@ class Portfolio extends React.Component {
   handleCancelClick = (e) => {
     this.setState({
       allocationButtonClicked: false,
-      rebalanceButtonClicked: false
-    })
+      rebalanceButtonClicked: false,
+    })    
+    
   }
 
-  saveAllocation = (e) => {
+  // barstyle can be success, error, warning, info, or left blank for default
+  handleSnackBarMessage = (message, barStyle) => {   
+    this.props.enqueueSnackbar(message, { 
+      variant: barStyle,
+      autoHideDuration: 3000,
+      preventDuplicate: true,
+      action: (
+        <Button size="small">
+          <MuiThemeProvider theme={colorTheme}>
+            <CloseIcon color="error" />
+          </MuiThemeProvider>
+        </Button>
+      )               
+    });
+  };
+
+  handleSaveAllocation = (e) => {
     let sum = 0;
     let dev = this.state.displayDeviation;
-    let fundsTargets = this.state.fundsTargets;
+    let displayTargets = this.state.displayTargets;
 
-    if (fundsTargets.length > 0){
-      for (let i = 0; i < fundsTargets.length; i++){
-        sum += fundsTargets[i].percentage;
+    if (displayTargets.length > 0){
+      for (let i = 0; i < displayTargets.length; i++){
+        sum += displayTargets[i].percentage;
       }
       //sum = this.state.targets.reduce((partial_sum, a) => partial_sum + a);
     } 
     console.log(sum);
 
     if(dev < 0 || dev > 5 || dev === undefined || dev === null){
-      this.setState({
-        warningMessage: "Deviation must be between 0-5%",
-        warningOpen: true
-      })
+      this.handleSnackBarMessage("Deviation must be between 0-5%", "error");
     } else if(sum !== 100) {
-      this.setState({
-        warningMessage: "Target does not add up to 100",
-        warningOpen: true
-      })
+      this.handleSnackBarMessage("Target % does not add up to 100", "error");
     } else {
       if (!this.state.preferencesSet){
         this.postCurrPortfolioPrefs(this.state.portfolioId, this.state.customerId);
       } else {
         this.putCurrPortfolioPrefs(this.state.portfolioId, this.state.customerId);
-        this.putCurrPortfolioDeviation(this.state.portfolioId, this.state.customerId);
+        // only put new deviation if different
+        if (dev !== this.state.allowedDeviation){
+          this.putCurrPortfolioDeviation(this.state.portfolioId, this.state.customerId);
+        }
       }
 
+      // Deep copy displayTargets onto fundTargets
+      let fundsTargets = JSON.parse(JSON.stringify(displayTargets));
       this.setState({
-        warningOpen: false,
+        //warningOpen: false,
         allocationButtonClicked: false,
         rebalanceButtonClicked: false,
         preferencesExist: true,
@@ -470,22 +546,18 @@ class Portfolio extends React.Component {
     
   }
 
-  handleAlertClose = (e) => {
-    this.setState({
-      warningOpen: false
-    })
-  }
+  // handleAlertClose = (e) => {
+  //   this.setState({
+  //     warningOpen: false
+  //   })
+  // }
 
   handleModifyRecClick = (e) => {
-    // this.setState({
-     
-    // })
+    this.handleSnackBarMessage('modify not implemented yet');
   }
   handleExecuteRecClick = (e) => {
     this.postExecuteRecommendation(this.state.portfolioId, this.state.customerId, this.state.recommendationId);
-    this.setState({
-      warningOpen: false
-    })
+
   }
 
   postExecuteRecommendation(portfolioId, custId, recId) {
@@ -497,23 +569,18 @@ class Portfolio extends React.Component {
       }
     }  
     request(options, (error, response, body) => {
-      if (!error && response.statusCode === 200) {        
-        this.setState({
-          warningMessage: "Succesfully executed recommendation " + recId,
-          warningOpen: true,
-          rebalanceButtonClicked: false,
-          allocationButtonClicked: false,
-          loading: false
-        });
-        this.componentDidMount();
+      if (!error && response.statusCode === 200) {         
+        this.getFunds(this.state.customerId);
+        this.getCurrPortfolioPrefs(this.state.customerId); 
+        this.handleRebalanceClick();      
+        this.handleRebalanceClick();
+
         // Force reload to get current values to update, its hacky, but works
-        window.location.reload();
-        
+        //window.location.reload();
+        this.handleSnackBarMessage("Succesfully executed recommendation " + recId, "success");        
+                          
       } else {
-        this.setState({
-          warningMessage: "Failed to execute recommendation " + recId,
-          warningOpen: true,
-        });
+        this.handleSnackBarMessage("Failed to execute recommendation " + recId, "error");
         console.log(custId);
         console.log(portfolioId);
       }
@@ -546,8 +613,10 @@ class Portfolio extends React.Component {
           tempFundBalances.set(tempFunds[i].fundId, tempFunds[i].balance);
           tempTotal += tempFunds[i].balance.amount;
         }
+
+        let funds = JSON.parse(JSON.stringify(tempFunds)); 
         this.setState({
-          funds: tempFunds,
+          funds: funds,
           fundBalances: tempFundBalances,
           totalBalance: tempTotal
         });        
@@ -559,74 +628,82 @@ class Portfolio extends React.Component {
   }
 
 
-  createFund(index) {
-     return (      
-      <Paper className="fundCard"> 
-        <Grid container direction="row">
-          <Grid item xs={4} container direction="column" className="fundColumn">
+  createFund(index, checked) {
+     return (
+      <Slide direction="right" in={checked} mountOnEnter unmountOnExit>      
+        <Paper className="fundCard"> 
+          <Grid container direction="row">
+            <Grid item xs={4} container direction="column" className="percentColumn">
+              <Grid item>
+                <Typography variant="subtitle1">Fund ID</Typography>
+              </Grid>
+              <Grid item>
+                <Typography className="fundIDString" variant="subtitle1">{this.state.funds[index].fundId}</Typography>
+              </Grid>
+            </Grid>          
+        
+          <Grid item xs={4} container direction="column" className="percentColumn">
             <Grid item>
-              <Typography variant="subtitle1">Fund ID</Typography>
+              <Typography variant="subtitle1">Current</Typography>
             </Grid>
-            <Grid item>
-              <Typography className="fundIDString" variant="subtitle1">{this.state.funds[index].fundId}</Typography>
-            </Grid>
-          </Grid>          
-      
-        <Grid item xs={4} container direction="column" className="percentColumn">
-          <Grid item>
-            <Typography variant="subtitle1">Current</Typography>
-          </Grid>
 
-          <Grid item>
-            <TextField
-            disabled id="filled-disabled"
-            label="%"
-            defaultValue={Math.round(this.state.funds[index].balance.amount * 100 / this.state.totalBalance)}
-            className="textField"
-            margin="normal"
-            variant="outlined"
-            style = {{width: 80}}                     
-            />
-          </Grid>
-        </Grid> 
-        {this.state.allocationButtonClicked ? (
-          <Grid item xs = {4} container direction="column" className="percentColumn">
-          <Grid item>
-            <Typography variant="subtitle1" >Target </Typography>
-          </Grid>
-            <TextField
-              id="outlined-number"
-              label="%"
-              value={(!this.state.preferencesExist) ? (0):(this.state.fundsTargets[index].percentage)}
-              onChange={this.handleTargetChange(index)}
-              type="number"
-              className="textField"       
-              margin="normal"
-              variant="outlined"
-              style = {{width: 80}}                          
-            />                      
+            <Grid item>
+              <MuiThemeProvider theme={textfieldTheme}>
+                <TextField
+                disabled id="filled-disabled"
+                label="%"
+                defaultValue={Math.round(this.state.funds[index].balance.amount * 100 / this.state.totalBalance)}
+                className="textField"
+                margin="normal"
+                variant="outlined"
+                style = {{width: 80}}                     
+                />
+              </MuiThemeProvider>
+            </Grid>
           </Grid> 
-        ) : (
-          <Grid item xs = {4} container direction="column" className="percentColumn">
+          {this.state.allocationButtonClicked ? (
+            <Grid item xs = {4} container direction="column" className="percentColumn">
             <Grid item>
-            <Typography variant="subtitle1"> Target </Typography>
+              <Typography variant="subtitle1" >Target </Typography>
             </Grid>
-            <Grid item>
-            <TextField
-              disabled
-              label="%"
-              id="filled-disabled"
-              value={(!this.state.preferencesExist) ? ("N/A"):(this.state.fundsTargets[index].percentage)}
-              className="textField"
-              margin="normal"
-              variant="outlined"              
-              style = {{width: 80}}                                   
-            />
+              <MuiThemeProvider theme={textfieldTheme}>
+              <TextField
+                id="outlined-number"
+                label="%"
+                value={(!this.state.preferencesExist) ? (0):(this.state.displayTargets[index].percentage)}
+                onChange={this.handleTargetChange(index)}
+                type="number"
+                className="textField"       
+                margin="normal"
+                variant="outlined"
+                style = {{width: 80}}                          
+              />       
+            </MuiThemeProvider>                
+            </Grid> 
+          ) : (
+            <Grid item xs = {4} container direction="column" className="percentColumn">
+              <Grid item>
+              <Typography variant="subtitle1"> Target </Typography>
+              </Grid>
+              <Grid item>
+              <MuiThemeProvider theme={textfieldTheme}>
+              <TextField
+                disabled
+                label="%"
+                id="filled-disabled"
+                value={(!this.state.preferencesExist) ? ("N/A"):(this.state.fundsTargets[index].percentage)}
+                className="textField"
+                margin="normal"
+                variant="outlined"              
+                style = {{width: 80}}                                   
+              />
+              </MuiThemeProvider>
+              </Grid>
             </Grid>
-          </Grid>
-        )}          
-      </Grid>
-    </Paper> 
+          )}          
+        </Grid>
+      </Paper> 
+    </Slide>
     )}
 
   createChart(index) {
@@ -691,18 +768,18 @@ class Portfolio extends React.Component {
           <Grid item container direction="row" className="recommendCard">
             <Grid item className="percentColumn">
             {/* TODO: fix up buy sell buttons */}
-            <div className={classes.toggleContainer}>
-            <ToggleButtonGroup 
-            value={this.state.recActionByFundId[this.state.funds[index].fundId] || ""} 
-            //exclusive onChange={this.handleBuyOrSell}
-            >
-              <ToggleButton value="buy">
-                BUY
-              </ToggleButton>
-                <ToggleButton value="sell">
-                SELL
-              </ToggleButton>
-            </ToggleButtonGroup>
+            <div className={classes.toggleContainer}>            
+              <ToggleButtonGroup 
+              value={this.state.recActionByFundId[this.state.funds[index].fundId] || ""} 
+              //exclusive onChange={this.handleBuyOrSell}
+              >                            
+                <ToggleButton value="buy">
+                  BUY
+                </ToggleButton>
+                  <ToggleButton value="sell">
+                  SELL
+                </ToggleButton>                
+              </ToggleButtonGroup>            
               {/* <Button variant="contained" color="default" className="sellButtonClass">
                 Sell
               </Button>
@@ -715,6 +792,7 @@ class Portfolio extends React.Component {
             </Grid>
             
             <Grid item className="percentColumn">
+            <MuiThemeProvider theme={textfieldTheme}>
             <TextField
               disabled id="filled-disabled"
               //id="outlined-number"
@@ -728,34 +806,41 @@ class Portfolio extends React.Component {
               InputLabelProps={{ shrink: true }} 
               style = {{width: 100}}
             />
+            </MuiThemeProvider>
             </Grid>
           </Grid>
         </Paper>      
     )
   }
 
+  handleTransitionSlide = () => {
+    this.setState(state => ({ checked: !state.checked }));
+  };
+
   createMiniFund(index) {
     let portion = Math.round(this.state.funds[index].balance.amount * 100 / this.state.totalBalance);
     let currFundID = this.state.funds[index].fundId;
     let currFund = this.state.fundBalances.get(currFundID);
+    
     return (      
-      
         <Paper className="fundCard">
           <Grid container direction="column" className="miniFundCard">
+              <MuiThemeProvider theme={colorTheme}>
               <Typography variant="body1">Fund ID: {currFundID}</Typography>
               <Typography variant="body1" inline={true}>Balance: </Typography>
-              <Typography variant="body1" inline={true} color="secondary"> {'$' + currFund.amount.toFixed(2) + ' ' + currFund.currency} </Typography>
+              <Typography variant="body1" inline={true} color="primary"> {'$' + currFund.amount.toFixed(2) + ' ' + currFund.currency} </Typography>
               <Typography variant="body1">Current: {portion + '%'}</Typography>
               <Typography variant="body1">Target: {this.state.fundsTargets[index].percentage + '%'}</Typography>
+              </MuiThemeProvider>
           </Grid>
         </Paper>
-      
       )
   }
 
 
   render() {
     const { classes } = this.props;
+    const { checked } = this.state;
     if (this.state.toDashboard === true) {
       return <Redirect to= {
         {
@@ -771,7 +856,7 @@ class Portfolio extends React.Component {
     let that = this;
 
     return (
-      <div className="dashboardContainer">
+      <div className="portfolioContainer">
         <Grid container justify="flex-end" spacing={24}>
           <Grid item xs={12}>
             <TCard className="portfolioHeader">
@@ -791,6 +876,7 @@ class Portfolio extends React.Component {
               </CardBody>
             </TCard>         
             <Grid item xs={12}>
+              <MuiThemeProvider theme={colorTheme}>
               <Button variant="contained" onClick={this.handleBack} color="default" className="topButton">
                 Back
               </Button>
@@ -798,7 +884,7 @@ class Portfolio extends React.Component {
                 Set Allocation
               </Button> */}
               <Button
-                variant="contained"
+                variant="contained" 
                 className={classNames(classes.button, {
                 [classes.buttonBlue]: this.state.allocationButtonColor === 'blue',
                 })}
@@ -813,27 +899,30 @@ class Portfolio extends React.Component {
                 onClick={this.handleRebalanceClick}>
               {'REBALANCE'}
               </Button>
+              </MuiThemeProvider>
             </Grid>            
             <div xs={6} lg={8} className="allowedDeviationClass">
             <Grid container justify="flex-start">
             {this.state.allocationButtonClicked ? (
-              <TextField
-                id="outlined-number"
-                label="Allowed Deviation"
-                value={this.state.displayDeviation || ""}
-                onChange={this.handleDeviationChange}
-                type="number"
-                className="textField"
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                InputProps={{
-                  endAdornment: <InputAdornment position="end">%</InputAdornment>,
-                }}
-                margin="normal"
-                variant="outlined"
-                style={{width: 200}}
-              />
+              <MuiThemeProvider theme={textfieldTheme}>
+                <TextField
+                  id="outlined-number"
+                  label="Allowed Deviation"
+                  value={this.state.displayDeviation || ""}
+                  onChange={this.handleDeviationChange}
+                  type="number"
+                  className="textField"
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  InputProps={{
+                    endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                  }}
+                  margin="normal"
+                  variant="outlined"
+                  style={{width: 200}}
+                />
+              </MuiThemeProvider>
             ):(
               <Typography variant="subtitle1"  className="allowedDeviationText">
                 <AssessmentIcon fontSize="inherit" className="assessmentIcon"/>                
@@ -857,7 +946,9 @@ class Portfolio extends React.Component {
                                             
                   <Grid container justify="flex-start" direction="row" spacing={24} className="fundsRow">  
                     <Grid item xs={that.state.rebalanceButtonClicked ? 5 : 9}>
-                      {that.state.rebalanceButtonClicked? that.createMiniFund(i) : that.createFund(i)}
+                      {that.state.rebalanceButtonClicked? 
+                        that.createMiniFund(i) :
+                        that.createFund(i, checked)}    
                     </Grid>
                     <Grid item>
                       {that.createChart(i)}
@@ -872,31 +963,35 @@ class Portfolio extends React.Component {
             {this.state.allocationButtonClicked && (
               <Grid container spacing={24} className="bottomRow">
                 <Grid item>
-                <Button onClick={this.saveAllocation} variant="contained" color="secondary" className="topButton">
-                  SAVE
-                </Button>
-                <Button onClick={this.handleCancelClick} variant="contained" color="default" className="topButton">
-                  CANCEL
-                </Button>
-                </Grid>
-              </Grid>
-            )}
-            {this.state.rebalanceButtonClicked && (
-              <Grid container spacing={24} className="bottomRow">
-                <Grid item>
-                  <Button onClick={this.handleModifyRecClick} variant="contained" color="secondary" className="topButton">
-                    MODIFY
-                  </Button>
-                  <Button onClick={this.handleExecuteRecClick} variant="contained" color="secondary" className="topButton">
-                    EXECUTE
+                <MuiThemeProvider theme={colorTheme}>
+                  <Button onClick={this.handleSaveAllocation} variant="contained" color="secondary" className="topButton">
+                    SAVE
                   </Button>
                   <Button onClick={this.handleCancelClick} variant="contained" color="default" className="topButton">
                     CANCEL
                   </Button>
+                </MuiThemeProvider>
                 </Grid>
               </Grid>
             )}
-            <Snackbar
+            {this.state.rebalanceButtonClicked && (
+              <MuiThemeProvider theme={colorTheme}>
+                <Grid container spacing={24} className="bottomRow">
+                  <Grid item>
+                    <Button onClick={this.handleModifyRecClick} variant="contained" color="secondary" className="topButton">
+                      MODIFY
+                    </Button>
+                    <Button onClick={this.handleExecuteRecClick} variant="contained" color="secondary" className="topButton">
+                      EXECUTE
+                    </Button>
+                    <Button onClick={this.handleCancelClick} variant="contained" color="default" className="topButton">
+                      CANCEL
+                    </Button>
+                  </Grid>
+                </Grid>
+              </MuiThemeProvider>
+            )}
+            {/* <Snackbar
               className="Snackbar"
               open={this.state.warningOpen}
               autoHideDuration={3000}
@@ -919,7 +1014,7 @@ class Portfolio extends React.Component {
                   </IconButton>
                 ]}
               />
-            </Snackbar>
+            </Snackbar> */}
           </Grid>
           </Grid>
         </div>      
@@ -927,4 +1022,30 @@ class Portfolio extends React.Component {
   }
 }
 
-export default withStyles(styles)(Portfolio);
+// //const MyApp = withSnackbar(Portfolio);
+
+
+//     <SnackbarProvider maxSnack={3}>
+//       <Portfolio />
+//     </SnackbarProvider>
+
+
+//export default withStyles(styles)(Portfolio);
+// // export const hello = MyApp;
+// export default withSnackbar(Portfolio);
+
+Portfolio.propTypes = {
+  enqueueSnackbar: PropTypes.func.isRequired,
+};
+
+// const MyApp = withSnackbar(Portfolio);
+
+// function IntegrationNotistack() {
+//   return (
+//     <SnackbarProvider maxSnack={2}>
+//       <MyApp />
+//     </SnackbarProvider>
+//   );
+// }
+
+export default withStyles(styles)(withSnackbar(Portfolio));

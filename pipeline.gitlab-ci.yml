@@ -1,8 +1,18 @@
 image: lakoo/node-gcloud-docker
 
 stages:
+  - build
   - deploy
 
+build:
+  stage: build
+  script:
+    - npm install
+    - npm run build
+  only:
+    - merge_requests
+  
+  
 production:
   stage: deploy
   script:
