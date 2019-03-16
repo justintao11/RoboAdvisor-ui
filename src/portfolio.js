@@ -639,10 +639,24 @@ class Portfolio extends React.Component {
       labels: []
     };
     let funds = this.state.funds;
-    for(let i=0; i<funds.length; i++) {      
+    let myColors = [
+      '#FF6384',
+      '#36A2EB',
+      '#FFCE56',
+      '#4caf50',
+      '#ff9100',
+      '#9c27b0',
+      '#1de9b6'
+      ];
+    for(let i=0; i<funds.length; i++) { 
+      //let random = i + Math.round(Math.random()*100);
+      //console.log("heres my number" + random);     
       graph.labels.push(this.state.funds[i].fundId);
       graph.datasets[0].data.push(Math.round(this.state.funds[i].balance.amount * 100 / this.state.totalBalance));
-      let color = (i === index) ? '#FF6384' : '#e0e0e0';
+      //let color = (i === index) ? '#FF6384' : '#e0e0e0';
+      let color = (i !== index) ? '#e0e0e0' : 
+      (myColors[(i%myColors.length)]);
+      
       graph.datasets[0].backgroundColor.push(color);
     }
 
