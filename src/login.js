@@ -74,6 +74,7 @@ class Login extends React.Component {
             <MuiThemeProvider theme={theme}>           
               <TextField
                 onKeyDown={this.keyPress} 
+                name="customer_login_textfield"
                 placeholder="Enter Customer ID"
                 label="Customer ID"
                 fullWidth={true}
