@@ -1,3 +1,11 @@
+.portfolioContainer {
+	padding-left: 5%;
+	padding-right: 5%;
+	padding-top: 6rem;
+	height: 100vh;
+	min-width: 320px;
+	max-width: 1600px;   
+}
 .portfolioHeader{
 	align-content: center;
 	margin-bottom:10px;
@@ -7,7 +15,7 @@
 }
 
 .topButton {
-	width: 200px;
+	width: 220px;
 	margin-left: 10px !important;
 	margin-right: 10px !important;
 	
@@ -55,24 +63,24 @@
 }
 
 .fundIDString {
-	padding-top: 20px;
+	padding-top: 1.3rem;
 }
 
-.fundColumn {
-	display: flex;
-	flex-direction: row;
-	text-align: left;
-	align-items: left;
-}
+/* .fundColumn {
+	text-align: center;
+} */
 
 .percentColumn {
-	display: flex;
-	flex-direction: row;
-	text-align: center;
 	align-items: center;
+	/* justify-content: center; */
+	
 }
 
+.outlined-number{
+	text-align: center;
+	justify-content: center;
 
+}
 
 /*.closeIcon {
   fontSize: 20;
