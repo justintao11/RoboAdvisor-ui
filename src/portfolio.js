@@ -167,14 +167,12 @@ class Portfolio extends React.Component {
 
 
 
-   componentDidMount() { 
-    this.getFunds(this.state.customerId);
-    this.getCurrPortfolioPrefs(this.state.customerId);
-    this.handleTransitionSlide();
+  componentDidMount() { 
+    let promise1 = this.getFunds(this.state.customerId);
+    promise1.then(this.getCurrPortfolioPrefs(this.state.customerId)).then(this.handleTransitionSlide())
   }
 
   getCurrPortfolioPrefs(custId) {
-    //console.log("getportfolio prefs ran")
     let currPortfolioPref;    
     let portfolioId = this.state.portfolioId;
     let options = {
@@ -184,19 +182,27 @@ class Portfolio extends React.Component {
         'x-custid': custId
       }
     }
-    request(options, (error, response, body) => {
-      if (!error && response.statusCode === 200) {
-        currPortfolioPref = JSON.parse(body); 
-        console.log(body);       
-      } else {
-        currPortfolioPref = null;
-      }
+    let that = this;
 
-      this.setState({
-        selectedPortfolioPreference: currPortfolioPref
-      })
+    return new Promise(function(resolve, reject) {
+      request(options, (error, response, body) => {
+        if (!error && response.statusCode === 200) {
+          currPortfolioPref = JSON.parse(body);
+          console.log(body);
+          that.setState({
+            selectedPortfolioPreference: currPortfolioPref
+          },
+            resolve(body)
+          )         
+          
+              
+        } else {
+          currPortfolioPref = null;        
+        }
+      });
+    }).then(value => {
       this.populatePrefs(); 
-    }); 
+    }) 
   }
 
   // Grab portfolio deviation & fund allocation if exists
@@ -556,34 +562,42 @@ class Portfolio extends React.Component {
     this.handleSnackBarMessage('modify not implemented yet');
   }
   handleExecuteRecClick = (e) => {
-    this.postExecuteRecommendation(this.state.portfolioId, this.state.customerId, this.state.recommendationId);
+    let that = this;
+    let promise1 = this.postExecuteRecommendation(this.state.portfolioId, this.state.customerId, this.state.recommendationId);
 
+
+    promise1.then( value => { 
+      that.handleCancelClick();
+      window.location.reload();
+      this.handleSnackBarMessage("Succesfully executed recommendation", "success");
+    })
+    
   }
 
   postExecuteRecommendation(portfolioId, custId, recId) {
-    let options = {
-      url: "https://fund-rebalancer-dot-hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/"+portfolioId+"/recommendation/"+recId+"/execute",      
-      method: 'POST',   
-      headers: {
-        'x-custid': custId
-      }
-    }  
-    request(options, (error, response, body) => {
-      if (!error && response.statusCode === 200) {         
-        this.getFunds(this.state.customerId);
-        this.getCurrPortfolioPrefs(this.state.customerId); 
-        this.handleRebalanceClick();      
-        this.handleRebalanceClick();
-
-        // Force reload to get current values to update, its hacky, but works
-        //window.location.reload();
-        this.handleSnackBarMessage("Succesfully executed recommendation " + recId, "success");        
-                          
-      } else {
-        this.handleSnackBarMessage("Failed to execute recommendation " + recId, "error");
-        console.log(custId);
-        console.log(portfolioId);
-      }
+    return new Promise(function(resolve, reject) {    
+      let options = {
+        url: "https://fund-rebalancer-dot-hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/"+portfolioId+"/recommendation/"+recId+"/execute",      
+        method: 'POST',   
+        headers: {
+          'x-custid': custId
+        }
+      }  
+      request(options, (error, response, body) => {
+        if (!error && response.statusCode === 200) { 
+           
+          resolve(body);      
+          // Force reload to get current values to update, its hacky, but works
+          //window.location.reload();
+                  
+                            
+        } else {
+          reject(error);
+          this.handleSnackBarMessage("Failed to execute recommendation " + recId, "error");
+          console.log(custId);
+          console.log(portfolioId);
+        }
+      })
     })
   }
 
@@ -596,83 +610,108 @@ class Portfolio extends React.Component {
         'x-custid': custId
       }
     }
+    let that = this;
 
-    request(options, (error, response, body) => {
-      if (!error && response.statusCode === 200) {
-        let info = JSON.parse(body);
-        //console.log(info);
-        let tempFunds;
-        let tempFundBalances = new Map();
-        for (let i = 0; i<info.length; i++) {
-          if(info[i].id === this.state.portfolioId) {
-            tempFunds = info[i].holdings;
+    return new Promise(function(resolve, reject) {
+      request(options, (error, response, body) => {
+        if (!error && response.statusCode === 200) {
+          let info = JSON.parse(body);
+          //console.log(info);
+          let tempFunds;
+          let tempFundBalances = new Map();
+          for (let i = 0; i<info.length; i++) {
+            if(info[i].id === that.state.portfolioId) {
+              tempFunds = info[i].holdings;
+            }
           }
-        }
-        let tempTotal = 0;
-        for(let i =0; i<tempFunds.length; i++) {
-          tempFundBalances.set(tempFunds[i].fundId, tempFunds[i].balance);
-          tempTotal += tempFunds[i].balance.amount;
-        }
+          let tempTotal = 0;
+          for(let i =0; i<tempFunds.length; i++) {
+            tempFundBalances.set(tempFunds[i].fundId, tempFunds[i].balance);
+            tempTotal += tempFunds[i].balance.amount;
+          }
 
-        let funds = JSON.parse(JSON.stringify(tempFunds)); 
-        this.setState({
-          funds: funds,
-          fundBalances: tempFundBalances,
-          totalBalance: tempTotal
-        });        
-      } else {
-        console.log("getPortfolioList res code: " + response.statusCode)
-        console.log(error);
-      }
-    });
+          let funds = JSON.parse(JSON.stringify(tempFunds)); 
+          that.setState({
+            funds: funds,
+            fundBalances: tempFundBalances,
+            totalBalance: tempTotal
+          },
+          resolve()  
+          );
+                
+        } else {
+          console.log("getPortfolioList res code: " + response.statusCode)
+          console.log(error);
+          reject(error);
+        }
+      });
+  })
   }
 
 
   createFund(index, checked) {
+    let portion = Math.round(this.state.funds[index].balance.amount * 100 / this.state.totalBalance);
+    let currFundID = this.state.funds[index].fundId;
+    let currFund = this.state.fundBalances.get(currFundID);
      return (
       <Slide direction="right" in={checked} mountOnEnter unmountOnExit>      
         <Paper className="fundCard"> 
-          <Grid container direction="row">
-            <Grid item xs={4} container direction="column" className="percentColumn">
+          <Grid container direction="row" className="fundRow">
+            {/* <Grid item xs={4} container direction="column" className="percentColumn">
               <Grid item>
                 <Typography variant="subtitle1">Fund ID</Typography>
               </Grid>
               <Grid item>
                 <Typography className="fundIDString" variant="subtitle1">{this.state.funds[index].fundId}</Typography>
               </Grid>
-            </Grid>          
-        
-          <Grid item xs={4} container direction="column" className="percentColumn">
-            <Grid item>
-              <Typography variant="subtitle1">Current</Typography>
+            </Grid>           */}
+
+            <Grid xs={4} container direction="column" className="fundInfoColumn">
+              <Grid item>
+              <MuiThemeProvider theme={colorTheme}>
+              <Typography variant="body1"><b>Fund ID: {currFundID}</b></Typography>
+              <Typography variant="body1" inline={true}>Balance: </Typography>
+              <Typography variant="body1" inline={true} color="primary"> {'$' + currFund.amount.toFixed(2) + ' ' + currFund.currency} </Typography>
+              </MuiThemeProvider>
+              </Grid>
             </Grid>
+        
+          <Grid xs={4} container direction="column" className="percentColumn">
+            {/* <Grid item>
+              <Typography variant="subtitle1">Current</Typography>
+            </Grid> */}
 
             <Grid item>
               <MuiThemeProvider theme={textfieldTheme}>
                 <TextField
                 disabled id="filled-disabled"
-                label="%"
-                defaultValue={Math.round(this.state.funds[index].balance.amount * 100 / this.state.totalBalance)}
-                className="textField"
+                // label="Current %"
+                defaultValue={portion}
+                inputProps={{
+                  style: { fontSize: 14, textAlign: "center", color:"white", backgroundColor:"#9e9e9e", overflow:"hidden", borderColor: '#9e9e9e', borderWidth: 2, borderRadius: 3,}
+                }}
                 margin="normal"
                 variant="outlined"
-                style = {{width: 80}}                     
+                style = {{width: '80px'}}                     
                 />
               </MuiThemeProvider>
             </Grid>
           </Grid> 
           {this.state.allocationButtonClicked ? (
-            <Grid item xs = {4} container direction="column" className="percentColumn">
-            <Grid item>
+            <Grid xs = {4} container direction="column" className="percentColumn">
+            {/* <Grid item>
               <Typography variant="subtitle1" >Target </Typography>
-            </Grid>
+            </Grid> */}
               <MuiThemeProvider theme={textfieldTheme}>
               <TextField
                 id="outlined-number"
-                label="%"
+                // label="Target %"
                 value={(!this.state.preferencesExist) ? (0):(this.state.displayTargets[index].percentage)}
                 onChange={this.handleTargetChange(index)}
                 type="number"
+                inputProps={{
+                  style: { fontSize: 14, textAlign: "center", color:"black", backgroundColor:"white", overflow:"hidden", borderColor: '#9e9e9e', borderWidth: 2, borderRadius: 3,}
+                }}
                 className="textField"       
                 margin="normal"
                 variant="outlined"
@@ -681,17 +720,20 @@ class Portfolio extends React.Component {
             </MuiThemeProvider>                
             </Grid> 
           ) : (
-            <Grid item xs = {4} container direction="column" className="percentColumn">
-              <Grid item>
+            <Grid xs = {4} container direction="column" className="percentColumn">
+              {/* <Grid item>
               <Typography variant="subtitle1"> Target </Typography>
-              </Grid>
+              </Grid> */}
               <Grid item>
               <MuiThemeProvider theme={textfieldTheme}>
               <TextField
                 disabled
-                label="%"
+                // label="Target %"
                 id="filled-disabled"
                 value={(!this.state.preferencesExist) ? ("N/A"):(this.state.fundsTargets[index].percentage)}
+                inputProps={{
+                  style: { fontSize: 14, textAlign: "center", color:"white", backgroundColor:"#9e9e9e", overflow:"hidden", borderColor: '#9e9e9e', borderWidth: 2, borderRadius: 3,}
+                }}
                 className="textField"
                 margin="normal"
                 variant="outlined"              
@@ -765,7 +807,7 @@ class Portfolio extends React.Component {
     return (      
         <Paper className="fundCard">
           <Typography variant="subtitle1">Recommendation:</Typography>
-          <Grid item container direction="row" className="recommendCard">
+          <Grid container direction="row" className="recommendCard">
             <Grid item className="percentColumn">
             {/* TODO: fix up buy sell buttons */}
             <div className={classes.toggleContainer}>            
@@ -826,7 +868,7 @@ class Portfolio extends React.Component {
         <Paper className="fundCard">
           <Grid container direction="column" className="miniFundCard">
               <MuiThemeProvider theme={colorTheme}>
-              <Typography variant="body1">Fund ID: {currFundID}</Typography>
+              <Typography variant="body1"><b>Fund ID: {currFundID}</b></Typography>
               <Typography variant="body1" inline={true}>Balance: </Typography>
               <Typography variant="body1" inline={true} color="primary"> {'$' + currFund.amount.toFixed(2) + ' ' + currFund.currency} </Typography>
               <Typography variant="body1">Current: {portion + '%'}</Typography>
@@ -858,16 +900,16 @@ class Portfolio extends React.Component {
     return (
       <div className="portfolioContainer">
         <Grid container justify="flex-end" spacing={24}>
-          <Grid item xs={12}>
+          <Grid xs={12} item>
             <TCard className="portfolioHeader">
               <CardBody>
                 <Row>
-                  <Col xs={8} md={6}>
+                  <Col xs={6} md={6}>
                     <Typography gutterBottom variant="subtitle1" component="h2">
                       Portfolio ID: {this.state.portfolioId}
                     </Typography>
                   </Col>
-                  <Col xs={8} md={6}>
+                  <Col xs={6} md={6}>
                     <Typography gutterBottom variant="subtitle1" component="h2">
                       Customer ID: {this.state.customerId}
                     </Typography>
@@ -940,23 +982,54 @@ class Portfolio extends React.Component {
             )}        
             </Grid> 
             </div>
+            {!that.state.rebalanceButtonClicked ? (  // Header row
+            <Slide direction="right" in={checked} mountOnEnter unmountOnExit>
+              <div xs={12}>   
+                <Grid container justify="flex-start" direction="row" spacing={24} className="tableHeader">
+                  <Grid item lg = {10}>
+                    <div> 
+                      <Grid container >
+                        <Grid item xs={4}>
+                          <Typography></Typography>
+                        </Grid>
+                        <Grid item xs={4}>
+                          <Typography gutterBottom variant="subtitle1" component="h2">
+                            <b>Current %</b>
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={4}>
+                          <Typography gutterBottom variant="subtitle1" component="h2">
+                            <b>Target %</b>
+                          </Typography>
+                        </Grid>
+                      </Grid>
+                    </div>                  
+                  </Grid>
+                </Grid>
+              </div>
+            </Slide>
+            ):(<div></div>)
+            }
             {this.state.funds.map(function(object, i){
                 return (
-                  <div xs={12} key={i} className="fundsTable">    
-                                            
-                  <Grid container justify="flex-start" direction="row" spacing={24} className="fundsRow">  
-                    <Grid item xs={that.state.rebalanceButtonClicked ? 5 : 9}>
-                      {that.state.rebalanceButtonClicked? 
-                        that.createMiniFund(i) :
-                        that.createFund(i, checked)}    
+                  <div xs={12} key={i} className="fundsTable">
+                    <Grid container justify="flex-start" direction="row" spacing={24}>  
+                      <Grid item lg ={that.state.rebalanceButtonClicked ? 6 : 10}>
+                        {that.state.rebalanceButtonClicked? 
+                          that.createMiniFund(i) :
+                          that.createFund(i, checked)}    
+                      </Grid>
+                      <Grid item >
+                        <Grid container className="donut">
+                          <Grid item>
+                            {that.createChart(i)}
+                          </Grid>
+                        </Grid>
+                      </Grid>
+                      <Grid lg={4} item>
+                        {that.state.rebalanceButtonClicked && that.createRecommendation(i)} 
+                      </Grid>              
                     </Grid>
-                    <Grid item>
-                      {that.createChart(i)}
-                    </Grid>
-                    <Grid item>
-                      {that.state.rebalanceButtonClicked && that.createRecommendation(i)} 
-                    </Grid>              
-                  </Grid>
                   </div> 
                 );
             })}
