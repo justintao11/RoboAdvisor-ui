@@ -4,14 +4,14 @@
 	padding-top: 6rem;
 	height: 100vh;
 	min-width: 320px;
-	max-width: 1600px;   
+	max-width: 1600px;
 }
 .portfolioHeader{
 	align-content: center;
 	margin-bottom:10px;
 }
 .portfolioHeader.card {	
-	background-color: #f8f9fa;	
+	background-color: #f5f5f5;	
 }
 
 .topButton {
@@ -46,10 +46,31 @@
 }
 
 .fundCard {
-	height: 120px;
-	margin-top: 10px;
-	margin-bottom: 5px;
+	height: 120px;	
+	margin-bottom: 10px;
+	justify-content: center;
+	align-items: center;
+	align-content: center;
+	
 }
+
+.fundRow{
+	padding-left:5px;
+	justify-content: center;
+	align-items: center;
+	align-content: center;
+	height: 100%;
+	background-color: #f5f5f5;
+}
+
+.donut{
+	padding-left:5px;
+	justify-content: center;
+	align-items: center;
+	align-content: center;
+	height: 100%;
+}
+
 
 .sellButtonClass {
 	width: 50px;
@@ -59,7 +80,9 @@
 
 .miniFundCard{
 	padding-left:5px;
-	text-align: left;	
+	height: 100%;
+	justify-content: center; 
+	background-color: #f5f5f5;
 }
 
 .fundIDString {
@@ -70,9 +93,17 @@
 	text-align: center;
 } */
 
+.tableHeader {
+	text-align: center;
+	padding: 0px !important;
+	margin-bottom: 0px !important;
+	justify-content: baseline;
+}
+
 .percentColumn {
 	align-items: center;
-	/* justify-content: center; */
+	justify-content: center; 
+	text-align: center;
 	
 }
 
@@ -81,6 +112,8 @@
 	justify-content: center;
 
 }
+
+
 
 /*.closeIcon {
   fontSize: 20;
