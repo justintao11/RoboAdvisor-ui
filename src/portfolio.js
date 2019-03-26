@@ -2,10 +2,7 @@ import React from "react";
 
 import {
   Card as TCard,
-  // CardHeader,
   CardBody,
-  // CardFooter,
-  // CardTitle,
   Row,
   Col
 } from "reactstrap";
@@ -20,13 +17,10 @@ import Button from '@material-ui/core/Button';
 import ToggleButton from '@material-ui/lab/ToggleButton';
 import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
 import TextField from '@material-ui/core/TextField';
-// import WarningIcon from '@material-ui/icons/Warning';
 import PropTypes from 'prop-types';
 import './portfolio.css';
 import { Redirect } from 'react-router-dom';
-//import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
-//import ErrorIcon from '@material-ui/icons/Error';
 import { withSnackbar } from 'notistack';
 import AssessmentIcon from '@material-ui/icons/AssessmentOutlined';
 import BookmarkBorderIcon from '@material-ui/icons/BookmarkBorderOutlined';
@@ -35,12 +29,6 @@ import { withStyles } from '@material-ui/core/styles';
 import Slide from '@material-ui/core/Slide';
 import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import './dashboard.js';
-
-
-// import {
-//   dashboardEmailStatisticsChart,
-// } from "./variables/charts.jsx";
-// import transitions from "@material-ui/core/styles/transitions";
 const request = require('request');
 
 const colorTheme = createMuiTheme({
@@ -73,22 +61,14 @@ const styles = theme => ({
   button: {
     background: 'linear-gradient(45deg, #EF241C 30%, #EF241C 100%)',
     backgroundColor: '#EF241C',
-    //borderRadius: 3,
-    //border: 1,
     color: 'white',
-    //height: 42,
     width: 220,
-    margin: '0px 10px',
-    //padding: '0px 0px',
-    //boxShadow: '0 3px 5px 2px rgba(245, 0 , 87, .3)',
+    margin: '0px 10px'
   },
   buttonBlue: {
     background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
     backgroundColor: '#21CBF3',
-    // background: 'linear-gradient(45deg, #404040 30%, #868686 90%)',
-    // backgroundColor: '#868686',
     color: 'white' 
-    //boxShadow: '0 3px 5px 2px rgba(33, 203, 243, .3)',
   },
   toggleContainer: {
     height: 56,
@@ -98,7 +78,6 @@ const styles = theme => ({
     justifyContent: 'flex-start',
     margin: `${theme.spacing.unit}px 0`,
     backgroundColor: 'white'
-    // background: theme.palette.background.default,
   },
 });
 
@@ -115,14 +94,15 @@ class Portfolio extends React.Component {
       rebalanceButtonClicked: false,    // Rebalance button clicked status
       preferencesSet: false,             // Preferences for portfolio exist in database
       preferencesExist: false,          // Preferences currently retrieved
-      funds: [],                // TODO: not sure 
+      funds: [],                // Information of funds
       fundBalances: {},         // dictionary of fundID:{balance, currency}
       totalBalance: 0,          // totalBalance balance of all funds
       allocationButtonColor: 'default',
       rebalanceButtonColor: 'default',
       buyOrSell: 'BUY',
       checked: false,
-      loading: false,      
+      loading: false,
+      isDeviated: false,        // a boolean value indicating whether current percentage is deviated from target ones.
 
 
       // {customerId:{}, id:{portfolio Id}, holdings:{}} 
@@ -161,15 +141,17 @@ class Portfolio extends React.Component {
     this.getFunds = this.getFunds.bind(this);
     this.handleTransitionSlide = this.handleTransitionSlide.bind(this);
     this.handleSnackBarMessage = this.handleSnackBarMessage.bind(this);
-
-
+    this.setFundTarget = this.setFundTarget.bind(this);
+    this.getFundIndex = this.getFundIndex.bind(this);
+    this.resetFundDisplayTarget = this.resetFundDisplayTarget.bind(this);
+    this.saveFundDisplayTarget = this.saveFundDisplayTarget.bind(this);
   }
 
 
 
   componentDidMount() { 
     let promise1 = this.getFunds(this.state.customerId);
-    promise1.then(this.getCurrPortfolioPrefs(this.state.customerId)).then(this.handleTransitionSlide())
+    promise1.then(() => this.getCurrPortfolioPrefs(this.state.customerId)).then(() => this.handleTransitionSlide())
   }
 
   getCurrPortfolioPrefs(custId) {
@@ -188,7 +170,7 @@ class Portfolio extends React.Component {
       request(options, (error, response, body) => {
         if (!error && response.statusCode === 200) {
           currPortfolioPref = JSON.parse(body);
-          console.log(body);
+          console.log( "getCurrPortfolioPrefs",body);
           that.setState({
             selectedPortfolioPreference: currPortfolioPref
           },
@@ -205,30 +187,77 @@ class Portfolio extends React.Component {
     }) 
   }
 
+  getFundIndex(id) {
+    let funds = this.state.funds;
+    for(let i =0; i<funds.length; i++) {
+      if(funds[i].fundId === id) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  setFundTarget(index, target) {
+    if(index !== -1) {
+      let fundsCopy = this.state.funds;
+      fundsCopy[index].target = target;
+      this.setState({
+        funds: fundsCopy
+      })
+    }
+  }
+
+  resetFundDisplayTarget() {
+    let fundsCopy = this.state.funds;
+    for(let i=0; i<fundsCopy.length; i++) {
+      if(fundsCopy[i].target !== undefined) {
+        fundsCopy[i].displayTarget = fundsCopy[i].target;
+      }
+    }
+    this.setState({
+      funds: fundsCopy
+    });
+  }
+
+  saveFundDisplayTarget() {
+    let fundsCopy = this.state.funds;
+    for(let i=0; i<fundsCopy.length; i++) {
+      if(fundsCopy[i].displayTarget !== undefined) {
+        fundsCopy[i].target = fundsCopy[i].displayTarget;
+      }
+    }
+    this.setState({
+      funds: fundsCopy
+    });
+  }
+
+  setFundDisplayTarget(index, displayTarget) {
+    if(index !== -1) {
+      let fundsCopy = this.state.funds;
+      fundsCopy[index].displayTarget = displayTarget;
+      this.setState({
+        funds: fundsCopy
+      })
+    }
+  }
+
   // Grab portfolio deviation & fund allocation if exists
   populatePrefs(){
     let prefs = this.state.selectedPortfolioPreference;
     if (prefs !== null){
-
-      let fundsTargets = [];   
-
       for (let i = 0; i < prefs.allocations.length; i++){
-        fundsTargets.push(prefs.allocations[i]);
+        this.setFundTarget(this.getFundIndex(prefs.allocations[i].fundId), prefs.allocations[i].percentage);
       }
-
-      // MUST use deepcopy of fundsTargets here, or else when you mutate fundsTargets,
-      // displayTargets will change as well 
-      let displayTargets = JSON.parse(JSON.stringify(fundsTargets));  
-
+      this.resetFundDisplayTarget();
+      console.log("AFTER", this.state.funds);
       this.setState({
         allowedDeviation: prefs.deviation,
         displayDeviation: prefs.deviation,
         portfolioType: prefs.type,
-        fundsTargets: fundsTargets,
-        displayTargets: displayTargets,
         preferencesSet: true,
         preferencesExist: true
       });
+      this.checkDeviation();
       
     } else {
     // TODO: else highlight set allocation button 
@@ -239,9 +268,42 @@ class Portfolio extends React.Component {
     }    
   }
 
+  checkDeviation() {
+    let fundsCopy = this.state.funds;
+    let maxDev = 0;
+    for(let i=0; i<fundsCopy.length; i++) {
+      let tempTarget = fundsCopy[i].target;
+      let tempPercent = Math.round(fundsCopy[i].balance.amount * 100 / this.state.totalBalance);
+      let tempDev = Math.abs(tempTarget - tempPercent);
+      if(tempDev>maxDev) {
+        maxDev = tempDev;
+      }
+    }
+    if(maxDev>this.state.allowedDeviation) {
+      this.setState({
+        isDeviated: true
+      });
+    }else{
+      this.setState({
+        isDeviated: false
+      })
+    }
+    console.log("CHECKING DEVIATION~!");
+    
+  }
+
   putCurrPortfolioPrefs(portfolioId, custID) {
-    let updatedPrefs = this.state.displayTargets;
-    console.log("this is putpref call " + updatedPrefs[0].fundId + " and percentage " + updatedPrefs[0].percentage)
+    let updatedPrefs = [];
+    let fundsCopy = this.state.funds;
+    for(let i=0; i<fundsCopy.length; i++) {
+      if(fundsCopy[i].displayTarget) {
+        updatedPrefs.push({
+          fundId: fundsCopy[i].fundId,
+          percentage: fundsCopy[i].displayTarget
+        });
+      }
+    }
+    console.log("putCurrPortfolioPrefs", updatedPrefs);
 
     let options = {
       url: "https://fund-rebalancer-dot-hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/"+ portfolioId +"/allocations",      
@@ -254,17 +316,12 @@ class Portfolio extends React.Component {
     request(options, (error, response, body) => {
       if (!error && response.statusCode === 200) {        
         this.setState({
-          // warningMessage: "Succesfully updated new preferences!",
-          // warningOpen: true,
           preferencesSet: true
         });
+        this.checkDeviation();
         this.handleSnackBarMessage("Succesfully updated new preferences!", "success");
         
       } else {
-        // this.setState({
-        //   warningMessage: "Failed to update new preferences.",
-        //   warningOpen: true,
-        // });
         this.handleSnackBarMessage("Failed to update new preferences", "error");
       }
     })
@@ -286,18 +343,13 @@ class Portfolio extends React.Component {
     request(options, (error, response, body) => {
       if (!error && response.statusCode === 200) {        
         this.setState({
-          // warningMessage: "Succesfully updated new deviation!",
-          // warningOpen: true,
           preferencesSet: true,
           allowedDeviation: this.state.displayDeviation
         });
+        this.checkDeviation();
         this.handleSnackBarMessage("Succesfully updated new deviation!", "success");
         
       } else {
-        // this.setState({
-        //   warningMessage: "Failed to update new deviation.",
-        //   warningOpen: true,
-        // });
         this.handleSnackBarMessage("Failed to update new deviation", "error");
       }
     })
@@ -305,7 +357,16 @@ class Portfolio extends React.Component {
 
   // TODO: might not be working, need more test cases
   postCurrPortfolioPrefs(portfolioId, custID) {
-    let allocationsClone = JSON.parse(JSON.stringify(this.state.fundsTargets));
+    let allocationsClone = [];
+    let fundsCopy = this.state.funds;
+    for(let i=0; i<fundsCopy.length; i++) {
+      if(fundsCopy[i].target !== undefined) {
+        allocationsClone.push({
+          fundId: fundsCopy[i].fundId,
+          percentage: fundsCopy[i].target
+        })
+      }
+    }
     let portfolioRequest = 
       {
         "allocations": allocationsClone,
@@ -316,7 +377,7 @@ class Portfolio extends React.Component {
       throw new Error ("Number of funds " + this.state.funds.length + "mismatch with number of target percents " + this.state.fundsTargets.length);
     }
     console.log("this is the post request obj "+ JSON.stringify(portfolioRequest));
-    console.log(portfolioRequest.allocations);
+    console.log("portfolioRequest.allocations", portfolioRequest.allocations);
 
     let options = {
       url: "https://fund-rebalancer-dot-hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/"+ portfolioId,      
@@ -329,17 +390,12 @@ class Portfolio extends React.Component {
     request(options, (error, response, body) => {
       if (!error && response.statusCode === 201) {        
         this.setState({
-          // warningMessage: "Succesfully posted new preferences!",
-          // warningOpen: true,
           preferencesSet: true,
           allowedDeviation: this.state.displayDeviation
         });
         this.handleSnackBarMessage("Succesfully posted new preferences!", "success");
-        
       } else {
         this.setState({
-          // warningMessage: "Failed to post new preferences.",
-          // warningOpen: true,
           preferencesSet: false
         });
         this.handleSnackBarMessage("Failed to post new preferences", "error");
@@ -384,7 +440,7 @@ class Portfolio extends React.Component {
         
       } else {
         this.setState({
-          //preferencesSet: false,
+          preferencesSet: false,
           //targets: temp
         });
         console.log(response.statusCode);        
@@ -401,25 +457,12 @@ class Portfolio extends React.Component {
   }
 
   handleTargetChange = index => event => {
-    let displayTargets = this.state.displayTargets;
     let funds = this.state.funds;
-
-    // if Allocation not available, prepopulate target array
-    if (!this.state.preferencesExist) {
-      for (let i = 0; i < funds.length; i++){
-        displayTargets.push({"fundId" : funds[i].fundId, "percentage": 0});
-      }
-    }
-    displayTargets[index].percentage = Number(event.target.value);    
-
-    console.log("current display targets length " + displayTargets.length)
-    console.log("Current display target for index " + index + "=" + displayTargets[index].percentage)
-    console.log("Current actual target for index " + index + "=" + this.state.fundsTargets[index].percentage)
-
-    this.setState({
-      //displayTargets: displayTargets,
-      preferencesExist: true
-    });
+    let curDisplayTarget = this.state.funds[index].displayTarget;
+    console.log(Number(event.target.value));
+    this.setFundDisplayTarget(index, Number(event.target.value)); 
+    console.log("Current display target for index " + index + "=" + this.state.funds[index].displayTarget)
+    console.log("Current actual target for index " + index + "=" + this.state.funds[index].target)
   }
 
   // TODO: able to modify recommendations
@@ -454,9 +497,9 @@ class Portfolio extends React.Component {
       this.setState({
         allocationButtonClicked: true,
         rebalanceButtonClicked: false,
-        displayDeviation: this.state.allowedDeviation,  
-        displayTargets: fundsTargets      
+        displayDeviation: this.state.allowedDeviation
       })
+      this.resetFundDisplayTarget();
     }
     if (this.state.allocationButtonClicked){
       this.handleCancelClick();      
@@ -514,15 +557,11 @@ class Portfolio extends React.Component {
   handleSaveAllocation = (e) => {
     let sum = 0;
     let dev = this.state.displayDeviation;
-    let displayTargets = this.state.displayTargets;
-
-    if (displayTargets.length > 0){
-      for (let i = 0; i < displayTargets.length; i++){
-        sum += displayTargets[i].percentage;
-      }
-      //sum = this.state.targets.reduce((partial_sum, a) => partial_sum + a);
-    } 
-    console.log(sum);
+    let fundsCopy = this.state.funds;
+    for (let i = 0; i < fundsCopy.length; i++){
+      sum += fundsCopy[i].displayTarget || 0;
+    }
+    console.log("sum", sum);
 
     if(dev < 0 || dev > 5 || dev === undefined || dev === null){
       this.handleSnackBarMessage("Deviation must be between 0-5%", "error");
@@ -538,25 +577,16 @@ class Portfolio extends React.Component {
           this.putCurrPortfolioDeviation(this.state.portfolioId, this.state.customerId);
         }
       }
-
-      // Deep copy displayTargets onto fundTargets
-      let fundsTargets = JSON.parse(JSON.stringify(displayTargets));
+      this.saveFundDisplayTarget();
       this.setState({
         //warningOpen: false,
         allocationButtonClicked: false,
         rebalanceButtonClicked: false,
-        preferencesExist: true,
-        fundsTargets: fundsTargets
+        preferencesExist: true
       })
     }
     
   }
-
-  // handleAlertClose = (e) => {
-  //   this.setState({
-  //     warningOpen: false
-  //   })
-  // }
 
   handleModifyRecClick = (e) => {
     this.handleSnackBarMessage('modify not implemented yet');
@@ -635,10 +665,7 @@ class Portfolio extends React.Component {
             funds: funds,
             fundBalances: tempFundBalances,
             totalBalance: tempTotal
-          },
-          resolve()  
-          );
-                
+          }, resolve());
         } else {
           console.log("getPortfolioList res code: " + response.statusCode)
           console.log(error);
@@ -706,7 +733,7 @@ class Portfolio extends React.Component {
               <TextField
                 id="outlined-number"
                 // label="Target %"
-                value={(!this.state.preferencesExist) ? (0):(this.state.displayTargets[index].percentage)}
+                value={(!!this.state.funds[index].displayTarget) ? (this.state.funds[index].displayTarget) : 0}
                 onChange={this.handleTargetChange(index)}
                 type="number"
                 inputProps={{
@@ -730,7 +757,7 @@ class Portfolio extends React.Component {
                 disabled
                 // label="Target %"
                 id="filled-disabled"
-                value={(!this.state.preferencesExist) ? ("N/A"):(this.state.fundsTargets[index].percentage)}
+                value={(this.state.funds[index].target !== undefined) ? (this.state.funds[index].target):("N/A")}
                 inputProps={{
                   style: { fontSize: 14, textAlign: "center", color:"white", backgroundColor:"#9e9e9e", overflow:"hidden", borderColor: '#9e9e9e', borderWidth: 2, borderRadius: 3,}
                 }}
@@ -872,7 +899,7 @@ class Portfolio extends React.Component {
               <Typography variant="body1" inline={true}>Balance: </Typography>
               <Typography variant="body1" inline={true} color="primary"> {'$' + currFund.amount.toFixed(2) + ' ' + currFund.currency} </Typography>
               <Typography variant="body1">Current: {portion + '%'}</Typography>
-              <Typography variant="body1">Target: {this.state.fundsTargets[index].percentage + '%'}</Typography>
+              <Typography variant="body1">Target: {(this.state.funds[index].target !== undefined) ? this.state.funds[index].target + '%' : "N/A"}</Typography>
               </MuiThemeProvider>
           </Grid>
         </Paper>
@@ -933,14 +960,15 @@ class Portfolio extends React.Component {
                 onClick={this.handleSetAllocationClick}>
               {!this.state.preferencesSet ? 'SET ALLOCATION':'UPDATE ALLOCATION'}
               </Button>
-              <Button
+              {this.state.isDeviated && (<Button
                 variant="contained"
                 className={classNames(classes.button, {
                 [classes.buttonBlue]: this.state.rebalanceButtonColor === 'blue',
                 })}
                 onClick={this.handleRebalanceClick}>
               {'REBALANCE'}
-              </Button>
+              </Button>)
+              }
               </MuiThemeProvider>
             </Grid>            
             <div xs={6} lg={8} className="allowedDeviationClass">
