@@ -457,8 +457,8 @@ class Portfolio extends React.Component {
   }
 
   handleTargetChange = index => event => {
-    let funds = this.state.funds;
-    let curDisplayTarget = this.state.funds[index].displayTarget;
+    // let funds = this.state.funds;
+    // let curDisplayTarget = this.state.funds[index].displayTarget;
     console.log(Number(event.target.value));
     this.setFundDisplayTarget(index, Number(event.target.value)); 
     console.log("Current display target for index " + index + "=" + this.state.funds[index].displayTarget)
@@ -493,7 +493,7 @@ class Portfolio extends React.Component {
 
   handleSetAllocationClick = (e) => {
     if (!this.state.rebalanceButtonClicked){
-      let fundsTargets = JSON.parse(JSON.stringify(this.state.fundsTargets));
+      // let fundsTargets = JSON.parse(JSON.stringify(this.state.fundsTargets));
       this.setState({
         allocationButtonClicked: true,
         rebalanceButtonClicked: false,
