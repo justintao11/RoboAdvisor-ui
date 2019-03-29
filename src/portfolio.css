@@ -15,12 +15,19 @@
 }
 
 .topButton {
-	width: 220px;
+	width: 220px;	
 	margin-left: 10px !important;
 	margin-right: 10px !important;
 	
 }
 
+.myAssetTitle{
+	margin-top: 10px !important;
+}
+.myDivider{
+	margin-top: 5px !important;
+	margin-bottom: 10px !important;
+}
 .assessmentIcon{
 	margin-bottom: 4px;
 }
@@ -37,7 +44,9 @@
 	margin-left: 10px !important;
 	margin-bottom: 10px !important;
 }
-
+.portfolioTypeText{
+	margin-left: 20px !important;
+}
 .recommendationIdText{
 	margin-left: 20px !important;
 }

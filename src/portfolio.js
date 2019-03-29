@@ -21,9 +21,12 @@ import PropTypes from 'prop-types';
 import './portfolio.css';
 import { Redirect } from 'react-router-dom';
 import CloseIcon from '@material-ui/icons/Close';
-import WarningIcon from '@material-ui/icons/Warning';
+import Divider from '@material-ui/core/Divider';
+import WarningIcon from '@material-ui/icons/WarningRounded';
 import { withSnackbar } from 'notistack';
 import AssessmentIcon from '@material-ui/icons/AssessmentOutlined';
+import WorkOutlineIcon from '@material-ui/icons/WorkOutline';
+import CheckIcon from '@material-ui/icons/CheckOutlined';
 import BookmarkBorderIcon from '@material-ui/icons/BookmarkBorderOutlined';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import { withStyles } from '@material-ui/core/styles';
@@ -80,6 +83,22 @@ const styles = theme => ({
     justifyContent: 'flex-start',
     margin: `${theme.spacing.unit}px 0`,
     backgroundColor: 'white'
+  },
+  notBalancedChip:{
+    background: '#feefb3',
+    borderColor:'#996600',
+    color:'#996600'
+  },
+  warningIcon:{
+    color: '#996600'
+  },
+  yesBalancedChip:{
+    background: '#e4f5e4',
+    borderColor:'#38a238',
+    color:'#38a238'
+  },
+  checkIcon:{
+    color:'#38a238'
   },
 });
 
@@ -259,12 +278,12 @@ class Portfolio extends React.Component {
       this.setState({
         allowedDeviation: prefs.deviation,
         displayDeviation: prefs.deviation,
-        portfolioType: prefs.type,
+        portfolioType: prefs.portfolioType,
         preferencesSet: true,
         preferencesExist: true
       });
       this.checkDeviation();
-      console.log(this.state.portfolioType);
+      console.log("HELLO MY TYPE IS: " + this.state.portfolioType);
       
     } else {
     // TODO: else highlight set allocation button 
@@ -569,10 +588,10 @@ class Portfolio extends React.Component {
                   
                             
         } else {
-          reject(error);
           this.handleSnackBarMessage("Failed to execute recommendation " + recId, "error");
           console.log(custId);
           console.log(portfolioId);
+          reject(error);   
         }
       })
     })
@@ -874,7 +893,7 @@ class Portfolio extends React.Component {
 
     return (
       <div className="portfolioContainer">
-        <Grid container justify="flex-end" spacing={24}>
+        <Grid container justify="flex-end">
           <Grid xs={12} item>
             <TCard className="portfolioHeader">
               <CardBody>
@@ -891,7 +910,7 @@ class Portfolio extends React.Component {
                   </Col>
                 </Row>
               </CardBody>
-            </TCard>         
+            </TCard>            
             <Grid item xs={12}>
               <MuiThemeProvider theme={colorTheme}>
               <Button variant="contained" onClick={this.handleBack} color="default" className="topButton">
@@ -915,15 +934,41 @@ class Portfolio extends React.Component {
               </Button>)
               }
               </MuiThemeProvider>
-            </Grid>            
+            </Grid>         
             <div xs={6} lg={8} className="allowedDeviationClass">
-            <Grid container justify="flex-start">
+              <Grid container alignItems="center" justify="flex-start" spacing={24} className="myAssetTitle">
+                <Grid item xs={6} md={2}>
+                  <Typography variant="h4" component="h2">
+                    <b>My Assets</b>
+                  </Typography>
+                </Grid>
+                <Grid item xs={6} md={4}>
+                {this.state.isDeviated &&(<MuiThemeProvider theme={textfieldTheme}>
+                  <Chip 
+                    className={classes.notBalancedChip}
+                    label="Portfolio due for rebalancing"
+                    icon={<WarningIcon className={classes.warningIcon}/>}
+                    variant={"outlined"}
+                  />
+                </MuiThemeProvider>)}
+                {!this.state.isDeviated && this.state.preferencesSet &&(<MuiThemeProvider theme={textfieldTheme}>
+                  <Chip 
+                    className={classes.yesBalancedChip}
+                    label="Your portfolio is balanced!"
+                    icon={<CheckIcon className={classes.checkIcon}/>}
+                    variant={"outlined"}
+                  />
+                </MuiThemeProvider>)}
+                </Grid>
+              </Grid>   
+            <Divider variant="fullWidth" className="myDivider"/>
+            <Grid container justify="flex-start" alignItems="center">
             {this.state.allocationButtonClicked ? (
               <MuiThemeProvider theme={textfieldTheme}>
                 <TextField
                   id="outlined-number"
                   label="Allowed Deviation"
-                  value={this.state.displayDeviation || ""}
+                  value={this.state.displayDeviation || 0}
                   onChange={this.handleDeviationChange}
                   type="number"
                   className="textField"
@@ -939,11 +984,18 @@ class Portfolio extends React.Component {
                 />
               </MuiThemeProvider>
             ):(
-              <Typography variant="subtitle1"  className="allowedDeviationText">
-                <AssessmentIcon fontSize="inherit" className="assessmentIcon"/>                
-                Allowed Deviation: {(this.state.allowedDeviation === null || this.state.allowedDeviation === undefined ) ?
-                   ("NOT SET"):(this.state.allowedDeviation+"%")}
-              </Typography>              
+              <React.Fragment>            
+                <Typography variant="subtitle1"  className="allowedDeviationText">
+                  <AssessmentIcon fontSize="inherit" className="assessmentIcon"/>                
+                  Allowed Deviation: {(this.state.allowedDeviation === null || this.state.allowedDeviation === undefined ) ?
+                    ("NOT SET"):(this.state.allowedDeviation+"%")}
+                </Typography>
+                <Typography variant="subtitle1" className="portfolioTypeText">
+                  <WorkOutlineIcon fontSize="inherit" className="assessmentIcon"/>                
+                  Portfolio Type: {(this.state.portfolioType === null || this.state.portfolioType === undefined ) ?
+                    ("N/A"):(this.state.portfolioType)}
+                </Typography>  
+              </React.Fragment>             
             )}
             {(this.state.recommendationId !== null && this.state.rebalanceButtonClicked) ? (
               <Typography variant="subtitle1" inline={true} className="recommendationIdText">
@@ -954,22 +1006,11 @@ class Portfolio extends React.Component {
               <Typography></Typography>  // false item
             )}        
             </Grid>
-            <Grid container justify="flex-start">
-              
-              {this.state.isDeviated &&(<MuiThemeProvider theme={colorTheme}>
-                <Chip
-                  label="Current Portfolio Allocation Exceeds Allowed Deviation"
-                  color={'primary'}
-                  icon={<WarningIcon/>}
-                />
-              </MuiThemeProvider>)}
-              
-            </Grid>
             </div>
             {!that.state.rebalanceButtonClicked ? (  // Header row
             <Slide direction="right" in={checked} mountOnEnter unmountOnExit>
               <div xs={12}>   
-                <Grid container justify="flex-start" direction="row" spacing={24} className="tableHeader">
+                <Grid container justify="flex-start" direction="row" spacing={16} className="tableHeader">
                   <Grid item lg = {10}>
                     <div> 
                       <Grid container >
@@ -997,7 +1038,7 @@ class Portfolio extends React.Component {
             {this.state.funds.map(function(object, i){
                 return (
                   <div xs={12} key={i} className="fundsTable">
-                    <Grid container justify="flex-start" direction="row" spacing={24}>  
+                    <Grid container justify="flex-start" direction="row" spacing={16}>  
                       <Grid item lg ={that.state.rebalanceButtonClicked ? 6 : 10}>
                         {that.state.rebalanceButtonClicked? 
                           that.createMiniFund(i) :
