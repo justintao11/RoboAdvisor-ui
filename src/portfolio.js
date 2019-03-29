@@ -168,13 +168,16 @@ class Portfolio extends React.Component {
 
 
   componentDidMount() { 
-    let promise1 = this.getFunds(this.state.customerId);
-    promise1.then(this.getCurrPortfolioPrefs(this.state.customerId)).then(this.handleTransitionSlide())
+    this.getFunds(this.state.customerId);
+    //this.getCurrPortfolioPrefs(this.state.customerId)
+    this.handleTransitionSlide()
   }
 
   getCurrPortfolioPrefs(custId) {
     let currPortfolioPref;    
     let portfolioId = this.state.portfolioId;
+    console.log("current portfolio id" + portfolioId)
+    console.log("current cust id" + custId)
     let options = {
       url: "https://fund-rebalancer-dot-hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/" + portfolioId,
       method: 'GET',
@@ -209,26 +212,71 @@ class Portfolio extends React.Component {
   populatePrefs(){
     let prefs = this.state.selectedPortfolioPreference;
     if (prefs !== null){
-
-      let fundsTargets = [];   
+      let fundsAndPrefsMatch = true;
+      let oldFundsTargets = [];
+      let newFundsTargets = [];   
 
       for (let i = 0; i < prefs.allocations.length; i++){
-        fundsTargets.push(prefs.allocations[i]);
+        oldFundsTargets.push(prefs.allocations[i]);
       }
 
-      // MUST use deepcopy of fundsTargets here, or else when you mutate fundsTargets,
-      // displayTargets will change as well 
-      let displayTargets = JSON.parse(JSON.stringify(fundsTargets));  
+      console.log("current fundBalances size=" + this.state.fundBalances.size)
+      console.log("current oldFundsTargets size=" + oldFundsTargets.length)
+      if (this.state.fundBalances.size !== oldFundsTargets.length){
+        fundsAndPrefsMatch = false;
+        //console.log("got here")
+      } 
 
-      this.setState({
-        allowedDeviation: prefs.deviation,
-        displayDeviation: prefs.deviation,
-        portfolioType: prefs.type,
-        fundsTargets: fundsTargets,
-        displayTargets: displayTargets,
-        preferencesSet: true,
-        preferencesExist: true
-      });
+      for (let key of this.state.fundBalances.keys()){
+        console.log("current fundbalances fundid = " + key)
+      }
+      
+      for (let i=0; i < this.state.fundBalances.size ; i++){          
+        //console.log("current oldFundsTargets fundid = " + oldFundsTargets[i].fundId)
+        if (oldFundsTargets[i] !== undefined && this.state.fundBalances.has(oldFundsTargets[i].fundId)){            
+          //newFundsTargets.push(oldFundsTargets[i]);                      
+        } else {
+          //newFundsTargets.push(oldFundsTargets[i]);  
+          fundsAndPrefsMatch = false;  
+        }
+      }
+       
+      
+      
+      console.log("current newFundsTargets size=" + newFundsTargets.length)
+      console.log("currently funds and prefs match?" + fundsAndPrefsMatch)
+      // if fundIds match between portoflio funds and portfolio prefs
+      if (fundsAndPrefsMatch){
+        
+        // MUST use deepcopy of oldFundsTargets here, or else when you mutate oldFundsTargets,
+        // displayTargets will change as well 
+        let displayTargets = JSON.parse(JSON.stringify(oldFundsTargets));  
+
+        this.setState({
+          allowedDeviation: prefs.deviation,
+          displayDeviation: prefs.deviation,
+          portfolioType: prefs.type,
+          fundsTargets: oldFundsTargets,
+          displayTargets: displayTargets,
+          preferencesSet: true,
+          preferencesExist: true
+        });
+      } else {
+        let funds = this.state.funds;
+        for (let i = 0; i < funds.length; i++){
+          newFundsTargets.push({"fundId" : funds[i].fundId, "percentage": 0});
+        }
+        //let displayTargets = JSON.parse(JSON.stringify(newFundsTargets));  
+        this.setState({
+          allowedDeviation: prefs.deviation,
+          displayDeviation: prefs.deviation,
+          portfolioType: prefs.type,
+          fundsTargets: newFundsTargets,
+          // displayTargets: displayTargets,
+          preferencesSet: false,
+          preferencesExist: false
+        })
+      }
       
     } else {
     // TODO: else highlight set allocation button 
@@ -405,7 +453,7 @@ class Portfolio extends React.Component {
     let funds = this.state.funds;
 
     // if Allocation not available, prepopulate target array
-    if (!this.state.preferencesExist) {
+    if (!this.state.preferencesExist || this.state.targetsOutOfDate) {
       for (let i = 0; i < funds.length; i++){
         displayTargets.push({"fundId" : funds[i].fundId, "percentage": 0});
       }
@@ -414,7 +462,7 @@ class Portfolio extends React.Component {
 
     console.log("current display targets length " + displayTargets.length)
     console.log("Current display target for index " + index + "=" + displayTargets[index].percentage)
-    console.log("Current actual target for index " + index + "=" + this.state.fundsTargets[index].percentage)
+    //console.log("Current actual target for index " + index + "=" + this.state.fundsTargets[index].percentage)
 
     this.setState({
       //displayTargets: displayTargets,
@@ -635,9 +683,9 @@ class Portfolio extends React.Component {
             funds: funds,
             fundBalances: tempFundBalances,
             totalBalance: tempTotal
-          },
-          resolve()  
-          );
+          },          
+          resolve()
+          );          
                 
         } else {
           console.log("getPortfolioList res code: " + response.statusCode)
@@ -645,7 +693,9 @@ class Portfolio extends React.Component {
           reject(error);
         }
       });
-  })
+  }).then(value => {
+    this.getCurrPortfolioPrefs(this.state.customerId)
+  }) 
   }
 
 
