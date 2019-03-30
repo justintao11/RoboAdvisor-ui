@@ -250,8 +250,8 @@ class Portfolio extends React.Component {
   }
 
   resetDisplayRecommendations(){
-    let recActionsCopy = this.state.recActionByFundId;
-    let recUnitsCopy = this.state.recUnitsByFundId;
+    // let recActionsCopy = this.state.recActionByFundId;
+    // let recUnitsCopy = this.state.recUnitsByFundId;
 
  
 
