@@ -176,6 +176,8 @@ class Portfolio extends React.Component {
     this.getFundIndex = this.getFundIndex.bind(this);
     this.resetFundDisplayTarget = this.resetFundDisplayTarget.bind(this);
     this.saveFundDisplayTarget = this.saveFundDisplayTarget.bind(this);
+    this.updateCurrPortfolioPrefs = this.updateCurrPortfolioPrefs.bind(this);
+    this.calculateAllocations = this.calculateAllocations.bind(this);
   }
 
 
@@ -335,6 +337,51 @@ class Portfolio extends React.Component {
     console.log("CHECKING DEVIATION~!");
     
   }
+
+
+  calculateAllocations() {
+    let allocationsClone = [];
+    let fundsCopy = this.state.funds;
+    for(let i=0; i<fundsCopy.length; i++) {
+      if(fundsCopy[i].target !== undefined) {
+        allocationsClone.push({
+          fundId: fundsCopy[i].fundId,
+          percentage: fundsCopy[i].target
+        })
+      }
+    }
+    return allocationsClone;
+  }
+
+  updateCurrPortfolioPrefs() {
+    let portfolioRequest = {
+      "allocations": this.calculateAllocations(),
+      "deviation": this.state.displayDeviation
+    };
+
+    let options = {
+      url: "https://fund-rebalancer-dot-hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/"+ this.state.portfolioId,      
+      method: 'PUT',
+      json: portfolioRequest,      
+      headers: {
+        'x-custid': this.state.customerId
+      }
+    }
+
+    request(options, (error, response, body) => {
+      if (!error && response.statusCode === 200) {        
+        this.setState({
+          preferencesSet: true,
+          allowedDeviation: this.state.displayDeviation
+        });
+        this.handleSnackBarMessage("Succesfully updated preferences!", "success");
+        this.checkDeviation();
+      } else {
+        this.handleSnackBarMessage("Failed to update preferences", "error");
+      }
+    })
+  }
+
 
   // TODO: might not be working, need more test cases
   postCurrPortfolioPrefs(portfolioId, custID) {
@@ -554,16 +601,11 @@ class Portfolio extends React.Component {
         isSaveAllocationButtonDisabled:true
       })
       this.saveFundDisplayTarget();
-      this.postCurrPortfolioPrefs(this.state.portfolioId, this.state.customerId);
-      // if (!this.state.preferencesSet){
-        
-      // } else {
-      //   this.putCurrPortfolioPrefs(this.state.portfolioId, this.state.customerId);
-      //   // only put new deviation if different
-      //   if (dev !== this.state.allowedDeviation){
-      //     this.putCurrPortfolioDeviation(this.state.portfolioId, this.state.customerId);
-      //   }
-      // }
+      if (!this.state.preferencesSet){
+        this.postCurrPortfolioPrefs(this.state.portfolioId, this.state.customerId);
+      } else {
+        this.updateCurrPortfolioPrefs();
+      }
       
       this.setState({
         //warningOpen: false,
