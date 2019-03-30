@@ -8,15 +8,6 @@ import "bootstrap/dist/css/bootstrap.css";
 import "./assets/scss/paper-dashboard.scss";
 import "./assets/demo/demo.css";
 
-const styles = {
-    success: { backgroundColor: 'purple' },
-    error: { backgroundColor: 'blue' },
-    warning: { backgroundColor: 'green' },
-    info: { backgroundColor: 'yellow' },
-};
-
-
-
 ReactDOM.render(
 <SnackbarProvider 
 maxSnack={3}
@@ -24,9 +15,7 @@ anchorOrigin={{
     vertical: 'bottom',
     horizontal: 'left',
 }}
-style={
-    styles
-}
+
 ><App /></SnackbarProvider>
 , document.getElementById('root'));
 

@@ -10,11 +10,23 @@ import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 const theme = createMuiTheme({
   palette: {
     primary: { main: '#EF241C' }, // This is HSBC red 
-    secondary: { main: '#404040' }, // This is dark gray 404040
+    secondary: { main: '#404040', contrastText: "#fff" }, // This is dark gray 404040
+   
   },
   typography: { 
     useNextVariants: true, 
     fontSize: 12,},
+});
+
+const textTheme = createMuiTheme({
+  palette: {
+    primary: { main: '#fff' }, // This is HSBC red 
+    secondary: { main: '#404040', contrastText: "#fff" }, // This is dark gray 404040
+   
+  },
+  typography: { 
+    useNextVariants: true, 
+    },
 });
 
 class Login extends React.Component {
@@ -59,15 +71,18 @@ class Login extends React.Component {
     } else {
       return (
         <div className="loginContainer">
-          <Grid container justify="flex-end" spacing={24}>          
+          <div className="innerContents">
+          <Grid container justify="flex-start" className="mainGridContainer">       
+            <MuiThemeProvider theme={textTheme}>    
             <Grid item xs={12} className="title">
-              <Typography component="h1" variant="h3" gutterBottom>
+              <Typography variant="h2" color="primary" gutterBottom>
                 RoboAdvisor
               </Typography>
-              <Typography component="h1" variant="h4" gutterBottom>
+              <Typography variant="h4" color="primary" gutterBottom>
                 Portfolio Rebalancer Service
               </Typography>
             </Grid>
+            </MuiThemeProvider>
           </Grid>
           <Grid container  justify="flex-end">
             <Grid item xs={9} sm={6} className="login"> 
@@ -76,6 +91,9 @@ class Login extends React.Component {
                 onKeyDown={this.keyPress} 
                 name="customer_login_textfield"
                 placeholder="Enter Customer ID"
+                inputProps={{
+                  style: { backgroundColor:"#ffffff", overflow:"hidden", borderColor: '#EF241C', borderWidth: 1, borderRadius: 4,}
+                }}
                 label="Customer ID"
                 fullWidth={true}
                 margin="normal"
@@ -84,7 +102,7 @@ class Login extends React.Component {
               />
               </MuiThemeProvider>
             </Grid>
-            <Grid item xs={9} className="login">
+            <Grid item xs={9} className="loginButton">
               <MuiThemeProvider theme={theme}>
                 <Button
                   className="login_button"
@@ -96,6 +114,7 @@ class Login extends React.Component {
               </MuiThemeProvider>
             </Grid>
           </Grid>
+          </div>
         </div>
       );
     }

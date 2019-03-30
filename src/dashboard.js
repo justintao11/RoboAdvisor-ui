@@ -27,12 +27,11 @@ import ListItemAvatar from '@material-ui/core/ListItemAvatar';
 // import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import ListItemText from '@material-ui/core/ListItemText';
 import Avatar from '@material-ui/core/Avatar';
-//import IconButton from '@material-ui/core/IconButton';
+// import IconButton from '@material-ui/core/IconButton';
 import FolderIcon from '@material-ui/icons/Folder';
 // import DeleteIcon from '@material-ui/icons/Delete';
 // import TuneIcon from '@material-ui/icons/Tune';
 // import AssessmentIcon from '@material-ui/icons/Assessment'
-import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import { Redirect } from 'react-router-dom';
 import './dashboard.css';
 
@@ -41,17 +40,8 @@ import './dashboard.css';
 //   dashboardEmailStatisticsChart,
 //   dashboardNASDAQChart
 // } from "./variables/charts.jsx";
+
 const request = require('request');
-const theme = createMuiTheme({
-  palette: {
-    primary: { main: '#EF241C' }, // This is HSBC red 
-    secondary: { main: '#404040' }, // This is dark gray 404040
-  },
-  typography: { 
-    useNextVariants: true,
-    fontSize: 12,
-  },
-});
 
 class PortfolioIconsShown extends React.Component {
   constructor(props) {
@@ -299,11 +289,9 @@ class Dashboard extends React.Component {
       return (
         <div>
           Incorrect Customer ID, please try login in again.
-          <MuiThemeProvider theme={theme}>
-            <Button className="logoutButton" variant="contained" onClick={this.handleLogout} color="primary" >
-              Logout
-            </Button>
-          </MuiThemeProvider>
+          <Button className="logoutButton" variant="contained" onClick={this.handleLogout} color="secondary" >
+            Logout
+          </Button>
         </div>
       )
     } else if (!this.state.isPortfoliosLoaded || !this.state.isTotalAssetsLoaded) {
@@ -312,21 +300,19 @@ class Dashboard extends React.Component {
       return (
         <div className="dashboardContainer">
           <div className="header">
-            <MuiThemeProvider theme={theme}>
-              <Button className="logoutButton" variant="contained" onClick={this.handleLogout} color="primary" >
-                Logout
-              </Button>
-            </MuiThemeProvider>
+            <Button className="logoutButton" variant="contained" onClick={this.handleLogout} color="secondary" >
+              Logout
+            </Button>
           </div>
           <div className="userInfo">
             <Typography gutterBottom variant="h5" component="h2">
               Welcome back, {this.state.customerId}!
-                </Typography>
+            </Typography>
           </div>
           <Grid container justify="flex-end" spacing={16}>
             <Grid item xs={12}>
               <TCard className="card-stats">
-                <CardBody>
+                <CardBody >
                   <Row>
                     <Col xs={5} md={4}>
                       <div className="icon-big text-center">
