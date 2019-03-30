@@ -44,7 +44,7 @@ const colorTheme = createMuiTheme({
   },
   typography: { 
     useNextVariants: true,
-    fontSize: 12,
+    fontSize: 14,
     
   },
 });
@@ -57,7 +57,7 @@ const textfieldTheme = createMuiTheme({
   },
   typography: { 
     useNextVariants: true,
-    fontSize: 12,
+    fontSize: 14,
     
   },
 });
@@ -75,6 +75,11 @@ const styles = theme => ({
     backgroundColor: '#21CBF3',
     color: 'white' 
   },
+  buttonDisabled:{
+    backgroundColor: '#e0e0e0',
+    width: 220,
+    margin: '0px 10px'
+  },
   toggleContainer: {
     height: 56,
     padding: `${theme.spacing.unit}px ${theme.spacing.unit * 2}px`,
@@ -82,7 +87,8 @@ const styles = theme => ({
     alignItems: 'center',
     justifyContent: 'flex-start',
     margin: `${theme.spacing.unit}px 0`,
-    backgroundColor: 'white'
+    backgroundColor: 'white',
+
   },
   notBalancedChip:{
     background: '#feefb3',
@@ -113,6 +119,9 @@ class Portfolio extends React.Component {
       toDashboard: false,               // back to dashboard page
       allocationButtonClicked: false,   // Set Allocation button clicked status
       rebalanceButtonClicked: false,    // Rebalance button clicked status
+      modifyButtonClicked: false,       // Modify button clicked status
+      isExecuteButtonDisabled: false,          // prevent API buttons from being clicked more than once
+      isSaveAllocationButtonDisabled: false,
       preferencesSet: false,             // Preferences for portfolio exist in database
       preferencesExist: false,          // Preferences currently retrieved
       funds: [],                // Information of funds
@@ -159,6 +168,7 @@ class Portfolio extends React.Component {
     this.handleExecuteRecClick = this.handleExecuteRecClick.bind(this);
     this.handleAllocationButtonChange = this.handleAllocationButtonChange.bind(this);
     this.handleRebalanceButtonChange = this.handleRebalanceButtonChange.bind(this);
+    this.handleBuyOrSell = this.handleBuyOrSell.bind(this);
     this.getFunds = this.getFunds.bind(this);
     this.handleTransitionSlide = this.handleTransitionSlide.bind(this);
     this.handleSnackBarMessage = this.handleSnackBarMessage.bind(this);
@@ -175,6 +185,7 @@ class Portfolio extends React.Component {
     promise1.then(() => this.getCurrPortfolioPrefs(this.state.customerId));
     this.handleTransitionSlide();
     this.populatePrefs();
+
   }
 
   getCurrPortfolioPrefs(custId) {
@@ -237,6 +248,14 @@ class Portfolio extends React.Component {
     this.setState({
       funds: fundsCopy
     });
+  }
+
+  resetDisplayRecommendations(){
+    let recActionsCopy = this.state.recActionByFundId;
+    let recUnitsCopy = this.state.recUnitsByFundId;
+
+ 
+
   }
 
   saveFundDisplayTarget() {
@@ -532,6 +551,9 @@ class Portfolio extends React.Component {
     } else if(sum !== 100) {
       this.handleSnackBarMessage("Target % does not add up to 100", "error");
     } else {
+      this.setState({
+        isSaveAllocationButtonDisabled:true
+      })
       this.saveFundDisplayTarget();
       this.postCurrPortfolioPrefs(this.state.portfolioId, this.state.customerId);
       // if (!this.state.preferencesSet){
@@ -548,7 +570,8 @@ class Portfolio extends React.Component {
         //warningOpen: false,
         allocationButtonClicked: false,
         rebalanceButtonClicked: false,
-        preferencesExist: true
+        preferencesExist: true,
+        isSaveAllocationButtonDisabled: false
       })
     }
     
@@ -556,8 +579,15 @@ class Portfolio extends React.Component {
 
   handleModifyRecClick = (e) => {
     this.handleSnackBarMessage('modify not implemented yet');
+    this.setState({
+      modifyButtonClicked: true,
+    })
   }
   handleExecuteRecClick = (e) => {
+    this.setState({
+      isExecuteButtonDisabled:true
+    })
+
     let that = this;
     let promise1 = this.postExecuteRecommendation(this.state.portfolioId, this.state.customerId, this.state.recommendationId);
 
@@ -570,7 +600,21 @@ class Portfolio extends React.Component {
     
   }
 
+  handleCancelModifyClick = (e) => {
+    this.handleSnackBarMessage('modifications not saved', 'warning');
+    this.setState({
+      modifyButtonClicked: false,
+    })
+  }
+
+  handleSaveModifyClick = (e) => {
+    this.handleSnackBarMessage('save modify not implemented yet');
+    this.setState({
+      modifyButtonClicked: false,
+    })
+  }
   postExecuteRecommendation(portfolioId, custId, recId) {
+    let that = this;
     return new Promise(function(resolve, reject) {    
       let options = {
         url: "https://fund-rebalancer-dot-hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/"+portfolioId+"/recommendation/"+recId+"/execute",      
@@ -581,7 +625,10 @@ class Portfolio extends React.Component {
       }  
       request(options, (error, response, body) => {
         if (!error && response.statusCode === 200) { 
-           
+
+          that.setState({
+            isExecuteButtonDisabled: false
+          })
           resolve(body);      
           // Force reload to get current values to update, its hacky, but works
           //window.location.reload();
@@ -796,34 +843,24 @@ class Portfolio extends React.Component {
     this.setState({ buyOrSell });
   }
 
-  createRecommendation(index) {
+  createStaticRecommendation(index) {
     const { classes } = this.props;
     return (      
         <Paper className="fundCard">
           <Typography variant="subtitle1">Recommendation:</Typography>
           <Grid container direction="row" className="recommendCard">
             <Grid item className="percentColumn">
-            {/* TODO: fix up buy sell buttons */}
             <div className={classes.toggleContainer}>            
               <ToggleButtonGroup 
               value={this.state.recActionByFundId[this.state.funds[index].fundId] || ""} 
-              //exclusive onChange={this.handleBuyOrSell}
-              >                            
-                <ToggleButton value="buy">
+              >                    
+                <ToggleButton value="buy" disableRipple="true" disableFocusRipple="true">
                   BUY
                 </ToggleButton>
-                  <ToggleButton value="sell">
+                  <ToggleButton value="sell" disableRipple="true" disableFocusRipple="true">
                   SELL
                 </ToggleButton>                
               </ToggleButtonGroup>            
-              {/* <Button variant="contained" color="default" className="sellButtonClass">
-                Sell
-              </Button>
-            </Grid>
-            <Grid item className="percentColumn">
-              <Button variant="contained" color="secondary" className="sellButtonClass">
-                Buy
-              </Button> */}
             </div>
             </Grid>
             
@@ -832,6 +869,50 @@ class Portfolio extends React.Component {
             <TextField
               disabled id="filled-disabled"
               //id="outlined-number"
+              label="Units"
+              value = {this.state.recUnitsByFundId[this.state.funds[index].fundId] || 0}
+              onChange={this.handleRecommendationChange(index)}
+              type="number"
+              className="textField"
+              margin="normal"
+              variant="outlined"
+              InputLabelProps={{ shrink: true }} 
+              style = {{width: 100}}
+            />
+            </MuiThemeProvider>
+            </Grid>
+          </Grid>
+        </Paper>      
+    )
+  }
+
+  createDynamicRecommendation(index) {
+    const { classes } = this.props;
+    return (      
+        <Paper className="fundCard">
+          <Typography variant="subtitle1">Recommendation:</Typography>
+          <Grid container direction="row" className="recommendCard">
+            <Grid item className="percentColumn">
+            <div className={classes.toggleContainer}>            
+              <ToggleButtonGroup 
+              value={this.state.buyOrSell} 
+              exclusive onChange={this.handleBuyOrSell}
+              >                            
+                <ToggleButton value="buy">
+                  BUY1
+                </ToggleButton>
+                  <ToggleButton value="sell">
+                  SELL1
+                </ToggleButton>                
+              </ToggleButtonGroup>            
+            </div>
+            </Grid>
+            
+            <Grid item className="percentColumn">
+            <MuiThemeProvider theme={textfieldTheme}>
+            <TextField
+              //disabled id="filled-disabled"
+              id="outlined-number"
               label="Units"
               value = {this.state.recUnitsByFundId[this.state.funds[index].fundId] || 0}
               onChange={this.handleRecommendationChange(index)}
@@ -893,6 +974,11 @@ class Portfolio extends React.Component {
 
     return (
       <div className="portfolioContainer">
+        <div className = "backButtonRow">
+          <Button variant="contained" onClick={this.handleBack} color="default" className="backButton">
+            Back
+          </Button>  
+        </div>    
         <Grid container justify="flex-end">
           <Grid xs={12} item>
             <TCard className="portfolioHeader">
@@ -912,26 +998,35 @@ class Portfolio extends React.Component {
               </CardBody>
             </TCard>            
             <Grid item xs={12}>
-              <MuiThemeProvider theme={colorTheme}>
-              <Button variant="contained" onClick={this.handleBack} color="default" className="topButton">
-                Back
-              </Button>
-              <Button
-                variant="contained" 
-                className={classNames(classes.button, {
-                [classes.buttonBlue]: this.state.allocationButtonColor === 'blue',
-                })}
-                onClick={this.handleSetAllocationClick}>
-              {!this.state.preferencesSet ? 'SET ALLOCATION':'UPDATE ALLOCATION'}
-              </Button>
-              {this.state.isDeviated && (<Button
-                variant="contained"
-                className={classNames(classes.button, {
-                [classes.buttonBlue]: this.state.rebalanceButtonColor === 'blue',
-                })}
-                onClick={this.handleRebalanceClick}>
-              {'REBALANCE'}
-              </Button>)
+              <MuiThemeProvider theme={colorTheme}>        
+              {!this.state.rebalanceButtonClicked? (
+                <Button
+                  variant="contained" 
+                  className={classNames(classes.button, {
+                  [classes.buttonBlue]: this.state.allocationButtonColor === 'blue',
+                  })}
+                  onClick={this.handleSetAllocationClick}>
+                  {!this.state.preferencesSet ? 'SET ALLOCATION':'UPDATE ALLOCATION'}
+                </Button>                
+              ):(
+                <Button disabled className={classes.buttonDisabled}>                    
+                  {!this.state.preferencesSet ? 'SET ALLOCATION':'UPDATE ALLOCATION'}
+                </Button>)              
+              }              
+              {this.state.isDeviated && (
+                !this.state.allocationButtonClicked? 
+                  (<Button
+                    variant="contained"
+                    className={classNames(classes.button, {
+                    [classes.buttonBlue]: this.state.rebalanceButtonColor === 'blue',
+                    })}
+                    onClick={this.handleRebalanceClick}>
+                    {'REBALANCE'}
+                  </Button>):(
+                  <Button disabled className={classes.buttonDisabled}>                    
+                    {'REBALANCE'}
+                  </Button>)
+                )
               }
               </MuiThemeProvider>
             </Grid>         
@@ -1052,7 +1147,13 @@ class Portfolio extends React.Component {
                         </Grid>
                       </Grid>
                       <Grid lg={4} item>
-                        {that.state.rebalanceButtonClicked && that.createRecommendation(i)} 
+                        {that.state.rebalanceButtonClicked? (
+                          !that.state.modifyButtonClicked? (
+                            that.createStaticRecommendation(i)
+                          ):(
+                            that.createDynamicRecommendation(i)
+                          )
+                        ):(<div></div>)} 
                       </Grid>              
                     </Grid>
                   </div> 
@@ -1062,7 +1163,9 @@ class Portfolio extends React.Component {
               <Grid container spacing={24} className="bottomRow">
                 <Grid item>
                 <MuiThemeProvider theme={colorTheme}>
-                  <Button onClick={this.handleSaveAllocation} variant="contained" color="secondary" className="topButton">
+                  <Button onClick={this.handleSaveAllocation} 
+                    disabled={this.state.isSaveAllocationButtonDisabled}
+                    variant="contained" color="secondary" className="topButton">
                     SAVE
                   </Button>
                   <Button onClick={this.handleCancelClick} variant="contained" color="default" className="topButton">
@@ -1076,15 +1179,31 @@ class Portfolio extends React.Component {
               <MuiThemeProvider theme={colorTheme}>
                 <Grid container spacing={24} className="bottomRow">
                   <Grid item>
-                    <Button onClick={this.handleModifyRecClick} variant="contained" color="secondary" className="topButton">
-                      MODIFY
-                    </Button>
-                    <Button onClick={this.handleExecuteRecClick} variant="contained" color="secondary" className="topButton">
-                      EXECUTE
-                    </Button>
-                    <Button onClick={this.handleCancelClick} variant="contained" color="default" className="topButton">
-                      CANCEL
-                    </Button>
+                    {!this.state.modifyButtonClicked? 
+                      (<React.Fragment>
+                        <Button onClick={this.handleModifyRecClick} variant="contained" color="secondary" className="topButton">
+                          MODIFY
+                        </Button>
+                        <Button onClick={this.handleExecuteRecClick}
+                          disabled={this.state.isExecuteButtonDisabled} 
+                          variant="contained" color="secondary" className="topButton">
+                          EXECUTE
+                        </Button>
+                        <Button onClick={this.handleCancelClick} variant="contained" color="default" className="topButton">
+                          CANCEL
+                        </Button>
+                      </React.Fragment>):(
+                        (<React.Fragment>
+                          <Button onClick={this.handleSaveModifyClick} variant="contained" color="secondary" className="topButton">
+                            SAVE MODIFICATION
+                          </Button>
+                          <Button onClick={this.handleCancelModifyClick} variant="contained" color="default" className="topButton">
+                            CANCEL
+                          </Button>
+                        </React.Fragment>)
+                      )
+                    }
+
                   </Grid>
                 </Grid>
               </MuiThemeProvider>

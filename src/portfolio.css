@@ -1,14 +1,14 @@
 .portfolioContainer {
-	padding-left: 5%;
-	padding-right: 5%;
-	padding-top: 6rem;
+	padding-left: 10%;
+	padding-right: 10%;
+	padding-top: 5rem;
 	height: 100vh;
 	min-width: 320px;
 	max-width: 1600px;
 }
 .portfolioHeader{
 	align-content: center;
-	margin-bottom:10px;
+	margin-bottom:20px !important;
 }
 .portfolioHeader.card {	
 	background-color: #f5f5f5;	
@@ -17,8 +17,17 @@
 .topButton {
 	width: 220px;	
 	margin-left: 10px !important;
-	margin-right: 10px !important;
-	
+	margin-right: 10px !important;	
+}
+
+.backButtonRow{
+	margin-bottom: 40px !important;	
+	text-align: right;
+}
+
+.backButton{
+	width: 86px;
+	/* margin-left: 10px !important; */
 }
 
 .myAssetTitle{
@@ -52,6 +61,7 @@
 }
 .recommendCard {
 	padding-left:10px;
+	align-items: center;
 }
 
 .fundCard {
@@ -113,6 +123,7 @@
 	align-items: center;
 	justify-content: center; 
 	text-align: center;
+	align-content: center;
 	
 }
 
