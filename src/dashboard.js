@@ -337,7 +337,7 @@ class Dashboard extends React.Component {
               <TCard className="UserInfo">
                 <CardContent>
                   <Typography variant="title" className="subheading">
-                    My Portfolios
+                    <b>My Portfolios</b>
                   </Typography>
                   <PortfolioList
                     customerId={this.state.customerId}

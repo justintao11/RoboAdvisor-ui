@@ -185,7 +185,6 @@ class Portfolio extends React.Component {
     promise1.then(() => this.getCurrPortfolioPrefs(this.state.customerId));
     this.handleTransitionSlide();
     this.populatePrefs();
-
   }
 
   getCurrPortfolioPrefs(custId) {

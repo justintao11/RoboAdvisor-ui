@@ -1,28 +1,51 @@
-.title {
-    display: flexbox;
+/* .title {
+    //display: flexbox;
     
-}
+} */
 
 .loginContainer {
+    background-image: url("assets/img/business2.jpg");
+    background-repeat: no-repeat;
+    background-size: cover;
     padding-left: 15%;
-    padding-right: 5%;
+    padding-right: 5%;    
+    margin-top: 100px;
     padding-top: 200px;
-    height: 100vh;
-    min-width: 320px;
-    max-width: 1000px;   
+    padding-bottom: 150px;
+    position: relative;
+    z-index: 99;
+}
+
+.innerContents{
+    margin-left: 15%;
+    margin-right: 35%; 
+    position: relative;
+    z-index: 89;
+    
+    /* background-color: gray;
+    overflow:"hidden";
+    border-color: '#EF241C';
+    border-width: 1;
+    border-Radius: 4; */
 }
 
 .login {
-    margin-top: 7%;
-    margin-left: 18%;
+    padding-top: 50px;
     text-align: right;
     display: inline-flexbox;
 }
 
-body {
+.loginButton{
+    text-align: right;
+    display: inline-flexbox;
+}
+
+body {    
     background-image: url("assets/img/HSBCLogo.svg");
     background-repeat: no-repeat;
     background-position: 60px;
     background-position-y: 40px;
     background-size: 150px;
+    z-index: -1;
+    position: relative;
 }
