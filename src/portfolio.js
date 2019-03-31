@@ -49,6 +49,19 @@ const colorTheme = createMuiTheme({
   },
 });
 
+const miniTextTheme = createMuiTheme({
+  palette: {
+    primary: { main: '#EF241C' }, // This is HSBC red 
+    secondary: { main: '#404040' }, // This is dark gray 404040
+    error: { main: '#ffffff'}
+  },
+  typography: { 
+    useNextVariants: true,
+    fontSize: 11,
+    
+  },
+});
+
 const textfieldTheme = createMuiTheme({
   palette: {
     primary: { main: '#404040' }, 
@@ -82,11 +95,13 @@ const styles = theme => ({
   },
   toggleContainer: {
     height: 56,
-    padding: `${theme.spacing.unit}px ${theme.spacing.unit * 2}px`,
+    padding: 0,
+    //padding: `${theme.spacing.unit}px ${theme.spacing.unit * 2}px`,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'flex-start',
-    margin: `${theme.spacing.unit}px 0`,
+    //margin: `${theme.spacing.unit}px 0`,
+    margin: 0,
     backgroundColor: 'white',
 
   },
@@ -178,6 +193,11 @@ class Portfolio extends React.Component {
     this.saveFundDisplayTarget = this.saveFundDisplayTarget.bind(this);
     this.updateCurrPortfolioPrefs = this.updateCurrPortfolioPrefs.bind(this);
     this.calculateAllocations = this.calculateAllocations.bind(this);
+    this.resetRecommendations = this.resetRecommendations.bind(this);
+    this.updateRecommendations = this.updateRecommendations.bind(this);
+    this.updateRecommendAction = this.updateRecommendAction.bind(this);
+    this.updateRecommendUnit = this.updateRecommendUnit.bind(this);
+    this.getRecommend = this.getRecommend.bind(this);
   }
 
 
@@ -186,7 +206,7 @@ class Portfolio extends React.Component {
     let promise1 = this.getFunds(this.state.customerId);
     promise1.then(() => this.getCurrPortfolioPrefs(this.state.customerId));
     this.handleTransitionSlide();
-    this.populatePrefs();
+    //this.populatePrefs();
   }
 
   getCurrPortfolioPrefs(custId) {
@@ -283,11 +303,6 @@ class Portfolio extends React.Component {
 
   // Grab portfolio deviation & fund allocation if exists
   populatePrefs(){
-    console.log("populatePrefs!!!!!");
-    console.log("populatePrefs!!!!!");
-    console.log("populatePrefs!!!!!");
-    console.log("populatePrefs!!!!!");
-
     let prefs = this.state.selectedPortfolioPreference;
     if (prefs !== null){
       for (let i = 0; i < prefs.allocations.length; i++){
@@ -443,6 +458,7 @@ class Portfolio extends React.Component {
         'x-custid': custID
       }
     }  
+    //let that = this;
     request(options, (error, response, body) => {
       if (!error && response.statusCode === 200) {
         let trans = JSON.parse(body)
@@ -459,13 +475,24 @@ class Portfolio extends React.Component {
           // console.log("hi" + recUnitsByFundId[fundId].units);
           // console.log("hi" + recUnitsByFundId[fundId].action);
         }
+
+        // TODO FIX
+         let tempRecommendations = trans.transactions;
+        // let tempFunds = that.state.funds
+        // for (let i = 0; i < tempRecommendations; i++){
+        //   if tempRecommendations.fundId =
+        // }
+
         this.setState({
           recommendationId: recommendationId,
-          recommendations: trans.transactions,
+          recommendations: tempRecommendations,
           recUnitsByFundId: recUnitsByFundId,
           recActionByFundId: recActionByFundId
         });
+        this.getFundCurrentPrices(custID);
         console.log("did i get run")
+        this.resetRecommendations();
+        console.log(this.state.recommendations);
         
       } else {
         this.setState({
@@ -478,6 +505,89 @@ class Portfolio extends React.Component {
       }
     })
   }
+
+  resetRecommendations() {
+    let recomm = this.state.recommendations;
+    for(let i =0; i<recomm.length; i++) {
+      recomm[i].displayAction = recomm[i].action;
+      recomm[i].displayUnits = recomm[i].units;
+    }
+    this.setState({
+      recommendations: recomm
+    })
+  }
+
+  updateRecommendations() {
+    let recomm = this.state.recommendations;
+    for(let i =0; i<recomm.length; i++) {
+      recomm[i].action = recomm[i].displayAction;
+      recomm[i].units = Number(recomm[i].displayUnits);
+    }
+    this.setState({
+      recommendations: recomm
+    });
+    let promise = this.postModifyRecommendation(this.state.portfolioId, this.state.customerId, this.state.recommendationId);
+    promise.then(() => {
+      console.log("sucess!!!!!");
+      this.handleSnackBarMessage("Succesfully updated recommendations", "success");
+    })
+
+  }
+
+  //action: "buy" | "sell"
+  updateRecommendAction(fundId, action) {
+    let recomm = this.state.recommendations;
+    let isExist = false;
+    for(let i =0; i<recomm.length; i++) {
+      if(recomm[i].fundId === fundId) {
+        isExist = true;
+        recomm[i].displayAction = action;
+      }
+    }
+    if(!isExist) {
+      recomm.push({
+        fundId: fundId,
+        displayAction: action
+      })
+    }
+    this.setState({
+      recommendations: recomm
+    });
+  }
+
+  updateRecommendUnit(fundId, unit) {
+    let recomm = this.state.recommendations;
+    let isExist = false;
+    for(let i =0; i<recomm.length; i++) {
+      if(recomm[i].fundId === fundId) {
+        isExist = true;
+        recomm[i].displayUnits = Number(unit);
+      }
+    }
+    if(!isExist) {
+      recomm.push({
+        fundId: fundId,
+        displayUnits: Number(unit)
+      })
+    }
+    this.setState({
+      recommendations: recomm
+    });
+  }
+
+  getRecommend(index) {
+    let fundId = this.state.funds[index].fundId;
+    let recomm = this.state.recommendations;
+    for(let i =0; i<recomm.length; i++) {
+      
+      if(recomm[i].fundId === fundId) {
+        return recomm[i];
+      }
+    }
+    //return undefined;
+  }
+
+
 
   handleDeviationChange = (e) => {
     this.setState({
@@ -494,10 +604,7 @@ class Portfolio extends React.Component {
     console.log("Current actual target for index " + index + "=" + this.state.funds[index].target)
   }
 
-  // TODO: able to modify recommendations
-  handleRecommendationChange = index => event => {
 
-  }
 
   handleAllocationButtonChange = (e) => {
     this.setState({ 
@@ -619,7 +726,7 @@ class Portfolio extends React.Component {
   }
 
   handleModifyRecClick = (e) => {
-    this.handleSnackBarMessage('modify not implemented yet');
+    this.handleSnackBarMessage('Click Save Modification to save your changes');
     this.setState({
       modifyButtonClicked: true,
     })
@@ -642,18 +749,63 @@ class Portfolio extends React.Component {
   }
 
   handleCancelModifyClick = (e) => {
-    this.handleSnackBarMessage('modifications not saved', 'warning');
+    this.handleSnackBarMessage('Modifications not saved', 'warning');
+    this.resetRecommendations();
     this.setState({
       modifyButtonClicked: false,
     })
   }
 
   handleSaveModifyClick = (e) => {
-    this.handleSnackBarMessage('save modify not implemented yet');
+    // this.handleSnackBarMessage('save modify not implemented yet');
+    // let recomm = this.state.recommendations;
+    // for(let i=0 ; i<recomm.length; i++) {
+      
+    // }
+    // this.handleSnackBarMessage("Units to be bought or sold not in range", "error");
+
+    this.updateRecommendations();
     this.setState({
       modifyButtonClicked: false,
     })
   }
+
+  postModifyRecommendation(portfolioId, custId, recId) {
+    let that = this;
+    let transactionList = [];
+    let recomm = this.state.recommendations;
+    for(let i=0 ; i<recomm.length; i++) {
+      transactionList.push({
+        "action": recomm[i].action,
+        "fundId": recomm[i].fundId,
+        "units": recomm[i].units
+      })
+    }
+    console.log(transactionList)
+    return new Promise(function(resolve, reject) {    
+      let options = {
+        url: "https://fund-rebalancer-dot-hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/"+portfolioId+"/recommendation/"+recId+"/modify",      
+        method: 'PUT',
+        json: transactionList,
+        headers: {
+          'x-custid': custId
+        }
+      }  
+      request(options, (error, response, body) => {
+        if (!error && response.statusCode === 200) { 
+          resolve(body);      
+          // Force reload to get current values to update, its hacky, but works
+          //window.location.reload();   
+        } else {
+          that.handleSnackBarMessage("Failed to save recommendation " + recId, "error");
+          console.log(custId);
+          console.log(portfolioId);
+          reject(error);   
+        }
+      })
+    })
+  }
+
   postExecuteRecommendation(portfolioId, custId, recId) {
     let that = this;
     return new Promise(function(resolve, reject) {    
@@ -667,24 +819,65 @@ class Portfolio extends React.Component {
       request(options, (error, response, body) => {
         if (!error && response.statusCode === 200) { 
 
-          that.setState({
-            isExecuteButtonDisabled: false
-          })
           resolve(body);      
           // Force reload to get current values to update, its hacky, but works
-          //window.location.reload();
-                  
-                            
+          //window.location.reload();   
         } else {
-          this.handleSnackBarMessage("Failed to execute recommendation " + recId, "error");
+          that.handleSnackBarMessage("Failed to execute recommendation " + recId, "error");
           console.log(custId);
           console.log(portfolioId);
           reject(error);   
         }
       })
+
+      that.setState({
+        isExecuteButtonDisabled: false
+      })
     })
   }
 
+  getFundCurrentPrices(custId) {
+    let options = {
+      url: "http://fund-rebalancer.hsbc-roboadvisor.appspot.com/roboadvisor/fundsystem/funds",
+      method: 'GET',
+      headers: {
+        'x-custid': custId
+      }
+    }
+    let that = this;
+
+    return new Promise(function(resolve, reject) {
+      request(options, (error, response, body) => {
+        if (!error && response.statusCode === 200) {
+          let info = JSON.parse(body);
+          console.log("IMHERE!!!!", info);
+          
+          let tempFunds = that.state.funds;
+          console.log("info length", info.length);
+          console.log("tempfunds length", tempFunds.length);
+
+          for (let i = 0; i<info.length; i++){
+            for (let j = 0; j<tempFunds.length; j++) {
+              // console.log(tempFunds[j], "+", info[i]);
+              if (info[i].fundId === tempFunds[j].fundId) {
+                tempFunds[j].price = info[i].price;
+              }
+            }
+          }
+          console.log("IMHERE AFTER!!!!", tempFunds);
+
+          that.setState({
+            loading: true
+          })
+          resolve();
+        } else {
+          console.log("get current funds price res code: " + response.statusCode)
+          console.log(error);
+          reject(error);
+        }
+      });
+  })
+  }
   
   getFunds(custId) {
     let options = {
@@ -880,39 +1073,61 @@ class Portfolio extends React.Component {
     )
   }
 
-  handleBuyOrSell = (event, buyOrSell) => {
-    this.setState({ buyOrSell });
+  handleBuyOrSell = index => (event, buyOrSell) => {
+    // console.log(index);
+    this.updateRecommendAction(this.state.funds[index].fundId, buyOrSell);
+    // this.setState({ buyOrSell });
   }
 
-  createStaticRecommendation(index) {
+  // TODO: able to modify recommendations
+  handleUnitChange = index => (event) => {
+    console.log(index);
+    this.updateRecommendUnit(this.state.funds[index].fundId, event.target.value);
+  }
+
+  createDynamicRecommendation(index) {
     const { classes } = this.props;
+    let price = this.state.funds[index].price && this.state.funds[index].price.amount
+    let currency = this.state.funds[index].price && this.state.funds[index].price.currency
     return (      
         <Paper className="fundCard">
           <Typography variant="subtitle1">Recommendation:</Typography>
-          <Grid container direction="row" className="recommendCard">
-            <Grid item className="percentColumn">
+
+          <Grid container direction="row" className="recommendCard" justify="flex-start">
+            <Grid item className="recColumn">
             <div className={classes.toggleContainer}>            
               <ToggleButtonGroup 
-              value={this.state.recActionByFundId[this.state.funds[index].fundId] || ""} 
-              >                    
-                <ToggleButton value="buy" disableRipple="true" disableFocusRipple="true">
+              value={this.state.modifyButtonClicked? 
+                (this.getRecommend(index) && this.getRecommend(index).displayAction)
+                : (this.getRecommend(index) && this.getRecommend(index).action)} 
+              exclusive onChange={this.handleBuyOrSell(index)}
+              >                            
+                <ToggleButton 
+                value="buy" 
+                disableRipple= {this.state.modifyButtonClicked? "false" : "true"} 
+                disableFocusRipple={this.state.modifyButtonClicked? "false" : "true"}>
                   BUY
                 </ToggleButton>
-                  <ToggleButton value="sell" disableRipple="true" disableFocusRipple="true">
+                  <ToggleButton 
+                  value="sell"
+                  disableRipple= {this.state.modifyButtonClicked? "false" : "true"} 
+                  disableFocusRipple={this.state.modifyButtonClicked? "false" : "true"}>
                   SELL
                 </ToggleButton>                
               </ToggleButtonGroup>            
             </div>
             </Grid>
             
-            <Grid item className="percentColumn">
+            <Grid item className="recColumn">
             <MuiThemeProvider theme={textfieldTheme}>
             <TextField
-              disabled id="filled-disabled"
-              //id="outlined-number"
+              disabled = {this.state.modifyButtonClicked? false : true}
+              id= {this.state.modifyButtonClicked? "outlined-number" : "filled-disabled"}
               label="Units"
-              value = {this.state.recUnitsByFundId[this.state.funds[index].fundId] || 0}
-              onChange={this.handleRecommendationChange(index)}
+              value = {this.state.modifyButtonClicked? 
+                ((this.getRecommend(index) && this.getRecommend(index).displayUnits) || 0)
+                : ((this.getRecommend(index) && this.getRecommend(index).units) || 0)}
+              onChange={this.handleUnitChange(index)}
               type="number"
               className="textField"
               margin="normal"
@@ -922,50 +1137,19 @@ class Portfolio extends React.Component {
             />
             </MuiThemeProvider>
             </Grid>
-          </Grid>
-        </Paper>      
-    )
-  }
 
-  createDynamicRecommendation(index) {
-    const { classes } = this.props;
-    return (      
-        <Paper className="fundCard">
-          <Typography variant="subtitle1">Recommendation:</Typography>
-          <Grid container direction="row" className="recommendCard">
-            <Grid item className="percentColumn">
-            <div className={classes.toggleContainer}>            
-              <ToggleButtonGroup 
-              value={this.state.buyOrSell} 
-              exclusive onChange={this.handleBuyOrSell}
-              >                            
-                <ToggleButton value="buy">
-                  BUY1
-                </ToggleButton>
-                  <ToggleButton value="sell">
-                  SELL1
-                </ToggleButton>                
-              </ToggleButtonGroup>            
-            </div>
+            <Grid item className="recColumn">
+            <Grid container direction="column">
+              <MuiThemeProvider theme={miniTextTheme}>
+                <Typography variant="body1">Current Units: {this.state.funds[index].units} </Typography>
+                <Typography variant="body1">Unit Price: ${price} </Typography>
+                <Typography variant="body1" inline>Total: </Typography>
+                <Typography variant="body1" inline>${this.getRecommend(index)? (this.getRecommend(index).displayUnits * price).toFixed(2) : 0}  {currency}</Typography>
+              </MuiThemeProvider>
             </Grid>
-            
-            <Grid item className="percentColumn">
-            <MuiThemeProvider theme={textfieldTheme}>
-            <TextField
-              //disabled id="filled-disabled"
-              id="outlined-number"
-              label="Units"
-              value = {this.state.recUnitsByFundId[this.state.funds[index].fundId] || 0}
-              onChange={this.handleRecommendationChange(index)}
-              type="number"
-              className="textField"
-              margin="normal"
-              variant="outlined"
-              InputLabelProps={{ shrink: true }} 
-              style = {{width: 100}}
-            />
-            </MuiThemeProvider>
             </Grid>
+
+
           </Grid>
         </Paper>      
     )
@@ -1189,11 +1373,12 @@ class Portfolio extends React.Component {
                       </Grid>
                       <Grid lg={4} item>
                         {that.state.rebalanceButtonClicked? (
-                          !that.state.modifyButtonClicked? (
-                            that.createStaticRecommendation(i)
-                          ):(
-                            that.createDynamicRecommendation(i)
-                          )
+                          // !that.state.modifyButtonClicked? (
+                          //   that.createStaticRecommendation(i)
+                          // ):(
+                            
+                          // )
+                          that.createDynamicRecommendation(i)
                         ):(<div></div>)} 
                       </Grid>              
                     </Grid>
