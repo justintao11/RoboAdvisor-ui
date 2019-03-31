@@ -19,3 +19,17 @@
 .UserInfo.card{
 	background-color: #f8f9fa;
 }
+
+.loginErrorPage {
+	padding-left: 32.5%;
+	padding-right: 30%;
+	padding-top: 20rem;
+	height: 100vh;
+	min-width: 320px;
+	max-width: 1600px;  
+}
+
+.charts.card {
+	background-color: #f8f9fa;
+	display: flex;
+}

@@ -8,87 +8,45 @@ import {
   Row,
   Col
 } from "reactstrap";
-// react plugin used to create charts
-// import { Line, Pie } from "react-chartjs-2";
-// function that returns a color based on an interval of numbers
-// import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
-// import Card from '@material-ui/core/Card';
-// import CardMedia from '@material-ui/core/CardMedia';
 import CardContent from '@material-ui/core/CardContent';
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
-// import Stats from "./Stats.jsx";
-// import CardActions from '@material-ui/core/CardActions';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemAvatar from '@material-ui/core/ListItemAvatar';
-// import ListItemIcon from '@material-ui/core/ListItemIcon';
-// import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import ListItemText from '@material-ui/core/ListItemText';
 import Avatar from '@material-ui/core/Avatar';
-// import IconButton from '@material-ui/core/IconButton';
 import FolderIcon from '@material-ui/icons/Folder';
-// import DeleteIcon from '@material-ui/icons/Delete';
-// import TuneIcon from '@material-ui/icons/Tune';
-// import AssessmentIcon from '@material-ui/icons/Assessment'
 import { Redirect } from 'react-router-dom';
+import MyChart from './barChart.js';
+import MyChart2 from './areaChart.js';
 import './dashboard.css';
-
-// import {
-//   // dashboard24HoursPerformanceChart,
-//   dashboardEmailStatisticsChart,
-//   dashboardNASDAQChart
-// } from "./variables/charts.jsx";
 
 const request = require('request');
 
-class PortfolioIconsShown extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      isPreferenceSet: false,
-      isRebalanceRequired: false
-    }
-  }
+// const data = [
+//   {
+//     name: 'Fund A', 'purchase price': 4000, 'current price': 2400,
+//   },
+//   {
+//     name: 'Fund B', 'purchase price': 3000, 'current price': 1398,
+//   },
+//   {
+//     name: 'Fund C', 'purchase price': 2000, 'current price': 9800,
+//   },
+//   {
+//     name: 'Fund D', 'purchase price': 2780, 'current price': 3908,
+//   },
+//   {
+//     name: 'Fund E', 'purchase price': 1890, 'current price': 4800,
+//   },
+//   {
+//     name: 'Fund F', 'purchase price': 2390, 'current price': 3800,
+//   },
+// ];
 
-  // componentDidMount() {
-  //   this.getPortfolioPreference(this.props.customerId, this.props.portfolioId)
-  // }
 
-  // getPortfolioPreference(custId, portfolioId) {
-  //   let options = {
-  //     url: "https://fund-rebalancer-dot-hsbc-roboadvisor.appspot.com/roboadvisor/portfolio/" + portfolioId,
-  //     method: 'GET',
-  //     headers: {
-  //       'x-custid': custId
-  //     }
-  //   }
-
-  //   request(options, (error, response, body) => {
-  //     if (!error && response.statusCode === 200) {
-  //       this.setState({
-  //         isPreferenceSet: true
-  //       })
-  //     } else {
-  //       console.log(response.body);
-  //     }
-  //   });
-  // }
-
-  render() {
-    return (
-      <div>
-        {/* <IconButton aria-label="Rebalance" disabled={true} color="secondary">
-          <AssessmentIcon />
-        </IconButton>
-        <IconButton aria-label="Tune" disabled={this.state.isPreferenceSet} color="secondary">
-          <TuneIcon />
-        </IconButton> */}
-      </div>
-    )
-  }
-}
 
 function Portfolio(props) {
   return (
@@ -100,9 +58,6 @@ function Portfolio(props) {
           </Avatar>
         </ListItemAvatar>
         <ListItemText primary={"Portfolio: " + props.portfolioId} />
-        <PortfolioIconsShown
-          portfolioId={props.portfolioId}
-          customerId={props.customerId} />
       </ListItem>
     </div>
   );
@@ -153,7 +108,10 @@ class Dashboard extends React.Component {
       isTotalAssetsLoaded: false,
       isPortfoliosLoaded: false,
       isPortfolioPreferencesLoaded: false,
-      isInvalidCustomer: false
+      isInvalidCustomer: false,
+      data: [],
+      yearData: [],
+      fundNames: []
     }
   }
 
@@ -166,6 +124,95 @@ class Dashboard extends React.Component {
     if (this.state.portfolioList.length !== prevState.portfolioList.length) {
       this.getPortfolioPreferences(this.state.customerId, this.state.portfolioList)
     }
+  }
+
+  calculateData() {
+    let data = [];
+    let yearData = [];
+    let times = ["current", "3 month", "5 month", "1 year", "3 year", "5 year", "10 year"];
+    let indexing = ["3m", "3m", "6m", "1y", "3y", "5y", "10y"];
+    let weight = [0, 0.25, 0.5, 1, 3, 5, 10];
+    let fundNames = [];
+
+    let portList = this.state.portfolioList;
+    for(let i =0 ; i<portList.length; i++) {
+      data = data.concat(portList[i].holdings);
+    }
+
+    console.log(this.state.portfolioList);
+    let promises = [];
+    let uniqueData = [];
+    let ids = [];
+
+    
+    for(let i=0; i<data.length; i++) {
+      let temp = data[i].balance.amount/data[i].units;
+      data[i]['purchase price']= temp.toFixed(2);
+      // 
+    }
+    console.log('data',data);
+
+    for(let i =0; i<data.length; i++) {
+      if(ids.indexOf(data[i].fundId) === -1) {
+        ids.push(data[i].fundId);
+        uniqueData.push(data[i])
+        promises.push(this.getFundDetail(data[i].fundId));
+      }
+    }
+    data = uniqueData;
+
+    Promise.all(promises).then((values) => {
+      for(let i=0; i<values.length; i++) {
+        fundNames.push(values[i].fundName);
+        data[i]['current price'] = values[i].price.amount;
+        data[i].name = values[i].fundName;
+      }
+      console.log("values", values);
+      console.log(data);
+      console.log(fundNames);
+
+
+
+
+      for(let i=0; i<times.length; i++) {
+        let element = {"name": times[i]};
+        for(let j=0; j<fundNames.length; j++) {
+          let basePrice = values[j].price.amount;
+          let temp = basePrice * (1 + 0.01*weight[i]*Number(values[j].averageReturns[indexing[i]]));
+          element[fundNames[j]] = temp.toFixed(2);
+        }
+        yearData.push(element);
+      }
+      console.log(yearData);
+
+      this.setState({
+        data: data,
+        fundNames: fundNames,
+        yearData: yearData,
+      })
+    });
+    
+  }
+
+  getFundDetail(fundId) {
+    let options = {
+      url: "https://fund-rebalancer-dot-hsbc-roboadvisor.appspot.com/roboadvisor/fundsystem/funds/"+fundId,
+      method: 'GET',
+      headers: {
+        'x-custid': this.state.customerId
+      }
+    }
+
+    return new Promise((resolve, reject) => {
+      request(options, (error, response, body) => {
+        if (!error && response.statusCode === 200) {
+          resolve(JSON.parse(body));
+        } else {
+          reject();
+          console.log(error);
+        }
+      })
+    });
   }
 
   getPortfolioList(custId) {
@@ -189,6 +236,7 @@ class Dashboard extends React.Component {
           portfolioDict: portfolioDict,
           isPortfoliosLoaded: true
         })
+        this.calculateData();
       } else {
         this.setState({
           isInvalidCustomer: true
@@ -287,8 +335,11 @@ class Dashboard extends React.Component {
       />;
     } else if (this.state.isInvalidCustomer) {
       return (
-        <div>
-          Incorrect Customer ID, please try login in again.
+        <div className="loginErrorPage">
+          <Typography gutterBottom variant="h5" component="h2">
+            Incorrect Customer ID, please try login in again.
+          </Typography>
+          
           <Button className="logoutButton" variant="contained" onClick={this.handleLogout} color="secondary" >
             Logout
           </Button>
@@ -347,59 +398,21 @@ class Dashboard extends React.Component {
                 </CardContent>
               </TCard>
             </Grid>
-            {/* 
-          <Grid item xs={6}>
-            <TCard>
-              <CardHeader>
-                <CardTitle>Funds Percentage</CardTitle>
-              </CardHeader>
-              <CardBody>
-                <Pie
-                  data={dashboardEmailStatisticsChart.data}
-                  options={dashboardEmailStatisticsChart.options}
-                />
-              </CardBody>
-              <CardFooter>
-                <div className="legend">
-                  <i className="fa fa-circle text-primary" /> Opened{" "}
-                  <i className="fa fa-circle text-warning" /> Read{" "}
-                  <i className="fa fa-circle text-danger" /> Deleted{" "}
-                  <i className="fa fa-circle text-gray" /> Unopened
-                </div>
-              </CardFooter>
-            </TCard>
-          </Grid> */}
-
-            {/* <Grid item xs={6}>
-            <TCard className="card-chart">
-              <CardHeader>
-                <CardTitle>Portfolio Performance</CardTitle>
-              </CardHeader>
-              <CardBody>
-                <Line
-                  data={dashboardNASDAQChart.data}
-                  options={dashboardNASDAQChart.options}
-                  width={250}
-                  height={100}
-                />
-              </CardBody>
-              <CardFooter>
-                <div className="chart-legend">
-                  <i className="fa fa-circle text-info" /> Tesla Model S{" "}
-                  <i className="fa fa-circle text-warning" /> BMW 5 Series
-                </div>
-                <hr />
-                <Stats>
-                  {[
-                    {
-                      i: "fas fa-check",
-                      t: " Data information certified"
-                    }
-                  ]}
-                </Stats>
-              </CardFooter>
-            </TCard>
-          </Grid> */}
+            <Grid item xs={12}>
+              <TCard className="charts">
+                  <CardContent>
+                    <MyChart2 data={this.state.yearData} keys={this.state.fundNames}/>
+                  </CardContent>
+                </TCard>
+            </Grid>
+            <Grid item xs={12}>
+              <TCard className="charts">
+                  <CardContent>
+                    <MyChart data={this.state.data}/>
+                    
+                  </CardContent>
+                </TCard>
+            </Grid>
           </Grid>
         </div>
       );
