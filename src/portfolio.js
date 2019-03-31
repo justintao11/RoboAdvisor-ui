@@ -34,6 +34,11 @@ import Slide from '@material-ui/core/Slide';
 import Chip from '@material-ui/core/Chip';
 import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import './dashboard.js';
+import Dialog from '@material-ui/core/Dialog';
+import DialogActions from '@material-ui/core/DialogActions';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogContentText from '@material-ui/core/DialogContentText';
+import DialogTitle from '@material-ui/core/DialogTitle';
 const request = require('request');
 
 const colorTheme = createMuiTheme({
@@ -51,8 +56,8 @@ const colorTheme = createMuiTheme({
 
 const miniTextTheme = createMuiTheme({
   palette: {
-    primary: { main: '#EF241C' }, // This is HSBC red 
-    secondary: { main: '#404040' }, // This is dark gray 404040
+    primary: { main: '#EF241C' }, // red
+    secondary: { main: '#38a238' }, // green
     error: { main: '#ffffff'}
   },
   typography: { 
@@ -142,12 +147,15 @@ class Portfolio extends React.Component {
       funds: [],                // Information of funds
       fundBalances: {},         // dictionary of fundID:{balance, currency}
       totalBalance: 0,          // totalBalance balance of all funds
+      rebalanceDifference: 0,   // cost of doing rebalance
       allocationButtonColor: 'default',
       rebalanceButtonColor: 'default',
       buyOrSell: 'BUY',
       checked: false,
       loading: false,
       isDeviated: false,        // a boolean value indicating whether current percentage is deviated from target ones.
+      openConfirmCancelDialog: false,              // dialog openConfirmCancelDialog?
+      openConfirmRebalanceDialog: false,
 
 
       // {customerId:{}, id:{portfolio Id}, holdings:{}} 
@@ -198,6 +206,8 @@ class Portfolio extends React.Component {
     this.updateRecommendAction = this.updateRecommendAction.bind(this);
     this.updateRecommendUnit = this.updateRecommendUnit.bind(this);
     this.getRecommend = this.getRecommend.bind(this);
+    this.calcRebalanceTotal = this.calcRebalanceTotal.bind(this);
+    
   }
 
 
@@ -458,7 +468,7 @@ class Portfolio extends React.Component {
         'x-custid': custID
       }
     }  
-    //let that = this;
+    let that = this;
     request(options, (error, response, body) => {
       if (!error && response.statusCode === 200) {
         let trans = JSON.parse(body)
@@ -477,11 +487,14 @@ class Portfolio extends React.Component {
         }
 
         // TODO FIX
-         let tempRecommendations = trans.transactions;
-        // let tempFunds = that.state.funds
-        // for (let i = 0; i < tempRecommendations; i++){
-        //   if tempRecommendations.fundId =
-        // }
+        let tempRecommendations = trans.transactions;
+        let tempFunds = that.state.funds
+        console.log("^^^^ HERE", tempFunds);
+        for (let i = 0; i < tempRecommendations.length; i++){
+          let currentFundId = tempRecommendations[i].fundId;          
+          tempRecommendations[i].ownedUnits = tempFunds[that.getFundIndex(currentFundId)].units;
+
+        }
 
         this.setState({
           recommendationId: recommendationId,
@@ -520,9 +533,16 @@ class Portfolio extends React.Component {
   updateRecommendations() {
     let recomm = this.state.recommendations;
     for(let i =0; i<recomm.length; i++) {
-      recomm[i].action = recomm[i].displayAction;
-      recomm[i].units = Number(recomm[i].displayUnits);
+      if (recomm[i].displayAction === null || recomm[i].displayAction === undefined) {
+        recomm[i].action = 'buy';
+        recomm[i].units = 0;
+      } else {
+        recomm[i].action = recomm[i].displayAction;
+        recomm[i].units = Number(recomm[i].displayUnits);
+      }
+
     }
+    console.log("^^^current RECOM", recomm)
     this.setState({
       recommendations: recomm
     });
@@ -731,11 +751,32 @@ class Portfolio extends React.Component {
       modifyButtonClicked: true,
     })
   }
+
+  calcRebalanceTotal() {
+    let rebalanceCost = 0;
+    //let totalCurrentBalance = this.state.totalBalance;
+
+    let recomm = this.state.recommendations;
+    for (let i = 0; i < recomm.length; i++){
+      console.log("current subtotal", recomm[i].units * recomm[i].unitPrice)
+      let mod = (recomm[i].action === 'sell')? 1 : -1;
+      console.log("current mod ", mod)
+      rebalanceCost += (Number(recomm[i].units) * Number(recomm[i].unitPrice) * mod);
+    }
+
+    this.setState({
+      rebalanceCost: rebalanceCost
+    })
+    this.handleOpenConfirmRebalanceDialog();
+    
+
+  }
+
   handleExecuteRecClick = (e) => {
     this.setState({
       isExecuteButtonDisabled:true
     })
-
+    
     let that = this;
     let promise1 = this.postExecuteRecommendation(this.state.portfolioId, this.state.customerId, this.state.recommendationId);
 
@@ -745,10 +786,14 @@ class Portfolio extends React.Component {
       window.location.reload();
       this.handleSnackBarMessage("Succesfully executed recommendation", "success");
     })
+    this.setState({
+      isExecuteButtonDisabled:false
+    })
     
   }
 
   handleCancelModifyClick = (e) => {
+    this.handleCloseConfirmCancelDialog();
     this.handleSnackBarMessage('Modifications not saved', 'warning');
     this.resetRecommendations();
     this.setState({
@@ -758,16 +803,30 @@ class Portfolio extends React.Component {
 
   handleSaveModifyClick = (e) => {
     // this.handleSnackBarMessage('save modify not implemented yet');
-    // let recomm = this.state.recommendations;
-    // for(let i=0 ; i<recomm.length; i++) {
-      
-    // }
-    // this.handleSnackBarMessage("Units to be bought or sold not in range", "error");
+    let validModification = true;
+    let recomm = this.state.recommendations;
+    for(let i=0 ; i<recomm.length; i++) {
+      if (recomm[i].displayUnits < 0){
+        validModification = false;
+        this.handleSnackBarMessage("Units cannot be negative", "error");
+      }
+      if (recomm[i].displayUnits > recomm[i].ownedUnits && recomm[i].displayAction === 'sell'){
+        validModification = false;
+        this.handleSnackBarMessage("Cannot sell more units than you own", "error");
+      }
+      if (recomm[i].displayAction === null || recomm[i].displayAction === undefined){
+        validModification = false;
+        this.handleSnackBarMessage("Must select Buy or Sell", "error");
+      }  
+    }
 
-    this.updateRecommendations();
-    this.setState({
-      modifyButtonClicked: false,
-    })
+    if (validModification) {
+      this.updateRecommendations();
+      this.setState({
+        modifyButtonClicked: false,
+      })
+    }
+
   }
 
   postModifyRecommendation(portfolioId, custId, recId) {
@@ -864,10 +923,20 @@ class Portfolio extends React.Component {
               }
             }
           }
-          console.log("IMHERE AFTER!!!!", tempFunds);
+
+          // add price per unit into recommendations
+          let tempRecommendations = that.state.recommendations;
+          for (let j = 0; j<tempFunds.length; j++){
+            let currentFundUnitPrice = tempFunds[j].price.amount;
+            tempRecommendations[j].unitPrice = currentFundUnitPrice;
+          }
+
+          console.log("IMHERE AFTER!!!!", tempRecommendations);
 
           that.setState({
-            loading: true
+            loading: true,
+            funds: tempFunds,
+            recommendations: tempRecommendations
           })
           resolve();
         } else {
@@ -946,7 +1015,7 @@ class Portfolio extends React.Component {
               <MuiThemeProvider theme={colorTheme}>
               <Typography variant="body1"><b>Fund ID: {currFundID}</b></Typography>
               <Typography variant="body1" inline={true}>Balance: </Typography>
-              <Typography variant="body1" inline={true} color="primary"> {'$' + currFund.amount.toFixed(2) + ' ' + currFund.currency} </Typography>
+              <Typography variant="body1" inline={true} color="primary"> {'$' + Number(currFund.amount.toFixed(2)).toLocaleString('en-US', {minimumFractionDigits: 2}) + ' ' + currFund.currency} </Typography>
               </MuiThemeProvider>
               </Grid>
             </Grid>
@@ -1141,10 +1210,14 @@ class Portfolio extends React.Component {
             <Grid item className="recColumn">
             <Grid container direction="column">
               <MuiThemeProvider theme={miniTextTheme}>
-                <Typography variant="body1">Current Units: {this.state.funds[index].units} </Typography>
-                <Typography variant="body1">Unit Price: ${price} </Typography>
-                <Typography variant="body1" inline>Total: </Typography>
-                <Typography variant="body1" inline>${this.getRecommend(index)? (this.getRecommend(index).displayUnits * price).toFixed(2) : 0}  {currency}</Typography>
+                {/* <Typography variant="body1">Current Units: {this.state.funds[index].units} </Typography> */}
+                <Typography variant="body1">Owned Units: {this.getRecommend(index)? (this.getRecommend(index).ownedUnits) : 0} </Typography>
+                <Typography variant="body1">Price / Unit: ${price} </Typography>
+                <Typography variant="body1" inline>Transaction total: </Typography>
+                <Typography variant="body1" 
+                inline
+                color={(this.getRecommend(index) && this.getRecommend(index).displayAction === 'buy')?"primary" : "secondary"}
+                >${this.getRecommend(index)? Number((this.getRecommend(index).displayUnits * price).toFixed(2)).toLocaleString('en-US', {minimumFractionDigits: 2}) : 0}  {currency}</Typography>
               </MuiThemeProvider>
             </Grid>
             </Grid>
@@ -1170,7 +1243,7 @@ class Portfolio extends React.Component {
               <MuiThemeProvider theme={colorTheme}>
               <Typography variant="body1"><b>Fund ID: {currFundID}</b></Typography>
               <Typography variant="body1" inline={true}>Balance: </Typography>
-              <Typography variant="body1" inline={true} color="primary"> {'$' + currFund.amount.toFixed(2) + ' ' + currFund.currency} </Typography>
+              <Typography variant="body1" inline={true} color="primary"> {'$' + Number(currFund.amount.toFixed(2)).toLocaleString('en-US', {minimumFractionDigits: 2}) + ' ' + currFund.currency} </Typography>
               <Typography variant="body1">Current: {portion + '%'}</Typography>
               <Typography variant="body1">Target: {(this.state.funds[index].target !== undefined) ? this.state.funds[index].target + '%' : "N/A"}</Typography>
               </MuiThemeProvider>
@@ -1178,7 +1251,87 @@ class Portfolio extends React.Component {
         </Paper>
       )
   }
+  
 
+  
+  handleOpenConfirmCancelDialog() {
+    this.setState({openConfirmCancelDialog: true});
+  }
+  handleCloseConfirmCancelDialog() {
+    this.setState({openConfirmCancelDialog: false});
+  }
+
+  handleOpenConfirmRebalanceDialog() {
+    this.setState({openConfirmRebalanceDialog: true});
+  }
+  handleCloseConfirmRebalanceDialog() {
+    this.setState({openConfirmRebalanceDialog: false});
+  }
+
+  createDialog(title, message){
+    return(
+      <Dialog
+        open={this.state.openConfirmCancelDialog}
+        onClose={this.handleCloseConfirmCancelDialog.bind(this)}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">{title}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            {message}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <MuiThemeProvider theme={colorTheme}>
+          <Button onClick={this.handleCancelModifyClick.bind(this)} className="dialogButton" variant="contained" color="secondary">
+            Confirm
+          </Button>
+          <Button onClick={this.handleCloseConfirmCancelDialog.bind(this)} className="dialogButton" variant="contained" color="default" autoFocus>
+            Cancel
+          </Button>
+          </MuiThemeProvider>
+        </DialogActions>
+      </Dialog>  
+    )    
+  }  
+
+  createRebalanceConfirmDialog(){
+    return(
+      <Dialog
+        open={this.state.openConfirmRebalanceDialog}
+        onClose={this.handleCloseConfirmCancelDialog.bind(this)}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">{"Confirm Rebalance?"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            {(this.state.rebalanceCost) ? (
+              (this.state.rebalanceCost < 0) ? (
+                "Your rebalance will require a deposit of $" + (this.state.rebalanceCost.toFixed(2) * -1).toLocaleString('en-US', {minimumFractionDigits: 2}) + " to complete. Press confirm to continue."
+              ):(
+                "Your rebalance will net an increase of $" + (this.state.rebalanceCost.toFixed(2) * 1).toLocaleString('en-US', {minimumFractionDigits: 2}) + " in cash! Press confirm to continue."
+              )                            
+            ):(
+              "sample text"
+            )}
+            
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <MuiThemeProvider theme={colorTheme}>
+          <Button onClick={this.handleExecuteRecClick.bind(this)} className="dialogButton" variant="contained" color="secondary">
+            Confirm
+          </Button>
+          <Button onClick={this.handleCloseConfirmRebalanceDialog.bind(this)} className="dialogButton" variant="contained" color="default" autoFocus>
+            Cancel
+          </Button>
+          </MuiThemeProvider>
+        </DialogActions>
+      </Dialog>  
+    )    
+  } 
 
   render() {
     const { classes } = this.props;
@@ -1199,6 +1352,10 @@ class Portfolio extends React.Component {
 
     return (
       <div className="portfolioContainer">
+        <div>
+          {this.createDialog("Confirm Cancel?", "Your modifcations will not be saved if you click Confirm.")}
+          {this.createRebalanceConfirmDialog()}
+        </div>    
         <div className = "backButtonRow">
           <Button variant="contained" onClick={this.handleBack} color="default" className="backButton">
             Back
@@ -1410,7 +1567,7 @@ class Portfolio extends React.Component {
                         <Button onClick={this.handleModifyRecClick} variant="contained" color="secondary" className="topButton">
                           MODIFY
                         </Button>
-                        <Button onClick={this.handleExecuteRecClick}
+                        <Button onClick={this.calcRebalanceTotal}
                           disabled={this.state.isExecuteButtonDisabled} 
                           variant="contained" color="secondary" className="topButton">
                           EXECUTE
@@ -1423,7 +1580,7 @@ class Portfolio extends React.Component {
                           <Button onClick={this.handleSaveModifyClick} variant="contained" color="secondary" className="topButton">
                             SAVE MODIFICATION
                           </Button>
-                          <Button onClick={this.handleCancelModifyClick} variant="contained" color="default" className="topButton">
+                          <Button onClick={this.handleOpenConfirmCancelDialog.bind(this)} variant="contained" color="default" className="topButton">
                             CANCEL
                           </Button>
                         </React.Fragment>)

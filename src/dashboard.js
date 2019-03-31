@@ -342,7 +342,7 @@ class Dashboard extends React.Component {
                         <p className="card-category">Total Assets</p>
                         <CardTitle tag="p">
                           <Typography component="a">
-                            ${this.state.totalAssets.toFixed(2)}
+                            ${Number(this.state.totalAssets.toFixed(2)).toLocaleString('en-US', {minimumFractionDigits: 2})}
                           </Typography>
                         </CardTitle>
                       </div>

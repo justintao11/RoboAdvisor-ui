@@ -30,6 +30,13 @@
 	/* margin-left: 10px !important; */
 }
 
+.dialogButton{
+	width: 86px;
+	margin-bottom: 5px !important;
+	margin-right: 10px !important;
+	margin-left: 5px !important;
+}
+
 .myAssetTitle{
 	margin-top: 10px !important;
 }
