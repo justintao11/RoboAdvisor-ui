@@ -7,6 +7,12 @@
 	max-width: 1600px;   
 }
 
+.spinner {
+	padding-left: 50%;
+	padding-right: 50%;
+	padding-top: 25%;
+}
+
 .header {
 	text-align: right;
 	margin-bottom: 10px;
