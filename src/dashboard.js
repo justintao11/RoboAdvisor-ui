@@ -35,6 +35,7 @@ import FolderIcon from '@material-ui/icons/Folder';
 import { Redirect } from 'react-router-dom';
 import './dashboard.css';
 import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
+import Loader from "react-loader-spinner";
 
 // import {
 //   // dashboard24HoursPerformanceChart,
@@ -311,7 +312,16 @@ class Dashboard extends React.Component {
         </div>
       )
     } else if (!this.state.isPortfoliosLoaded || !this.state.isTotalAssetsLoaded) {
-      return <div>Loading...</div>;
+      return (
+        <div className="spinner" >
+          <Loader
+            type="Oval"
+            color="#EF241C"
+            height="100"
+            width="100"
+          />
+        </div>
+      );
     } else {
       return (
         <div className="dashboardContainer">
