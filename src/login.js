@@ -94,7 +94,6 @@ class Login extends React.Component {
                 inputProps={{
                   style: { backgroundColor:"#ffffff", overflow:"hidden", borderColor: '#EF241C', borderWidth: 1, borderRadius: 4,}
                 }}
-                label="Customer ID"
                 fullWidth={true}
                 margin="normal"
                 onChange={this.handleCustomerIdChange}

@@ -34,6 +34,7 @@ import FolderIcon from '@material-ui/icons/Folder';
 // import AssessmentIcon from '@material-ui/icons/Assessment'
 import { Redirect } from 'react-router-dom';
 import './dashboard.css';
+import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 
 // import {
 //   // dashboard24HoursPerformanceChart,
@@ -42,6 +43,19 @@ import './dashboard.css';
 // } from "./variables/charts.jsx";
 
 const request = require('request');
+
+const colorTheme = createMuiTheme({
+  palette: {
+    primary: { main: '#EF241C' }, // This is HSBC red 
+    secondary: { main: '#404040' }, // This is dark gray 404040
+    error: { main: '#ffffff'}
+  },
+  typography: { 
+    useNextVariants: true,
+    fontSize: 14,
+    
+  },
+});
 
 class PortfolioIconsShown extends React.Component {
   constructor(props) {
@@ -289,9 +303,11 @@ class Dashboard extends React.Component {
       return (
         <div>
           Incorrect Customer ID, please try login in again.
-          <Button className="logoutButton" variant="contained" onClick={this.handleLogout} color="secondary" >
-            Logout
-          </Button>
+          <MuiThemeProvider theme={colorTheme}>
+            <Button className="logoutButton" variant="contained" onClick={this.handleLogout} color="primary">
+              Logout
+            </Button>
+          </MuiThemeProvider>
         </div>
       )
     } else if (!this.state.isPortfoliosLoaded || !this.state.isTotalAssetsLoaded) {
@@ -300,9 +316,11 @@ class Dashboard extends React.Component {
       return (
         <div className="dashboardContainer">
           <div className="header">
-            <Button className="logoutButton" variant="contained" onClick={this.handleLogout} color="secondary" >
-              Logout
-            </Button>
+            <MuiThemeProvider theme={colorTheme}>
+              <Button className="logoutButton" variant="contained" onClick={this.handleLogout} color="primary">
+                Logout
+              </Button>
+            </MuiThemeProvider>
           </div>
           <div className="userInfo">
             <Typography gutterBottom variant="h5" component="h2">

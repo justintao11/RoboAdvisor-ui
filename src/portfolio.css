@@ -124,6 +124,15 @@
 	justify-content: center; 
 	text-align: center;
 	align-content: center;
+
+}
+
+.recColumn {
+	align-items: center;
+	justify-content: center; 
+	text-align: left;
+	align-content: center;
+	margin-left: 15px !important;
 	
 }
 
